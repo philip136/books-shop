@@ -1,0 +1,9 @@
+env/
+*.pyc
+*.xml
+*/migrations/*
+*/__pycache__/
+*.png
+*.jpg
+*.log
+.vscode/
