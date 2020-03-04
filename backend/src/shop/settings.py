@@ -71,8 +71,12 @@ REST_FRAMEWORK = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'tpyqiygo',
+        'USER': 'tpyqiygo',
+        'PASSWORD': 'EZUqJ3TGbXf8Tjd20tXFkdhpmgpEsRil',
+        'HOST': 'drona.db.elephantsql.com',
+        'PORT': '5432',
     }
 }
 
