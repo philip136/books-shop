@@ -5,6 +5,10 @@ class TypeProduct(models.Model):
     """ Type product: books, notepads and etc """
     type = models.CharField(max_length=50)
 
+    def __str__(self):
+        return self.type
+    
+
 
 class Product(models.Model):
     name = models.CharField(max_length=100)
