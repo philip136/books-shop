@@ -21,7 +21,16 @@ class ProductDetail extends React.Component{
     render(){
         return (
             <div className="productDetail">
-                <Product data={this.state.product} />
+                <div className="product-headline">
+                    {this.state.product.name}
+                </div>
+                <div className="product-image">
+                    <img src={this.state.product.image}></img>
+                </div>
+                <div className="another-info">
+                    Цена:{this.state.product.price } BYN,
+                    Количество:{this.state.product.count}
+                </div>
             </div>
         );
     }

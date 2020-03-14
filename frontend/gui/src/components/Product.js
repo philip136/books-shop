@@ -12,11 +12,9 @@ class Product extends React.Component{
           </div>
           <div className="product-description">
             Количество товаров: {this.props.data.count}  
-            Цена за штуку: {this.props.data.price}
+            Цена: {this.props.data.price} BYN
           </div>
-          <a href={`/${this.props.data.id}`}>
-            <LinkProduct> Перейти </LinkProduct>
-          </a>
+          <LinkProduct link={`/${this.props.data.id}`}/>
       </div>
     );
   }
