@@ -1,5 +1,5 @@
 from django.db import models
-
+from sorl.thumbnail import ImageField
 
 class TypeProduct(models.Model):
     """ Type product: books, notepads and etc """
@@ -16,6 +16,7 @@ class Product(models.Model):
     delivery_time = models.DateField()
     count = models.IntegerField()
     type = models.ForeignKey(TypeProduct, on_delete=models.CASCADE)
+    image = ImageField(upload_to='uploads')
 
     def __str__(self):
         return f'{self.name}'

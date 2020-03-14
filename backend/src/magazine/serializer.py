@@ -10,5 +10,6 @@ class ProductSerializer(serializers.ModelSerializer):
             'name',
             'price',
             'delivery_time',
+            'image',
             'count',
         ]
