@@ -1,4 +1,5 @@
 import React from 'react'
+import LinkProduct from './LinkProduct';
 
 
 class Product extends React.Component{
@@ -13,6 +14,9 @@ class Product extends React.Component{
             Количество товаров: {this.props.data.count}  
             Цена за штуку: {this.props.data.price}
           </div>
+          <a href={`/${this.props.data.id}`}>
+            <LinkProduct> Перейти </LinkProduct>
+          </a>
       </div>
     );
   }
