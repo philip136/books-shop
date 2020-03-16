@@ -1,7 +1,7 @@
 import React,{Component} from 'react';
 import Product from '../components/Product';
 import axios from 'axios';
-import { List, Card } from 'antd';
+import { List } from 'antd';
 
 
 class ProductList extends Component{

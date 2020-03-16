@@ -4,15 +4,16 @@ import 'antd/dist/antd.css';
 import CustomLayout from './containers/Layout';
 import BaseRouter from './routes';
 import {BrowserRouter as Router } from 'react-router-dom';
+import {connect} from 'react-redux';
 
 
 
 class App extends Component {
   render(){
     return (
-      <div className="App">
+      <div>
         <Router>
-          <CustomLayout>
+          <CustomLayout {...this.props}>
             <BaseRouter />
           </CustomLayout>
         </Router>
@@ -21,4 +22,10 @@ class App extends Component {
   }
 }
 
-export default App;
+mapStateToProps = state => {
+  return {
+    isAuthenticated: state.token !== null
+  }
+}
+
+export default connect(mapStateToProps)(App);
