@@ -3,8 +3,8 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import {createStore, compose, applyMiddleware} from 'redux';
-import reducer from '.store/reducers/auth';
-import thunk from 'react-redux';
+import reducer from './store/reducers/auth';
+import thunk from 'redux-thunk';
 import { Provider } from 'react-redux';
 
 
@@ -19,5 +19,5 @@ const app = (
     </Provider>
 )
 
-ReactDOM.render(<App />, document.getElementById('root'));
+ReactDOM.render(app, document.getElementById('root'));
 serviceWorker.unregister();
