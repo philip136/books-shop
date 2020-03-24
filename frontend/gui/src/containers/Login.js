@@ -32,73 +32,78 @@ function withMyHook(Component) {
 
 
 class NormalLoginForm extends React.Component{
+
   onFinish = (value) => {
     this.props.onAuth(value.username, value.password);
-    this.props.history.push('/');
   }
 
   render(){
-    let errorMessage = null;
-    if (this.props.error) {
-        errorMessage = (
-            <p>{this.props.error.message}</p>
-        );
+    const { token } = this.props
+    if (token){
+      return <Redirect to='/' />
     }
-
-    const form = this.props.form;
-
-    return (
-      <div>
-        {errorMessage}
-         {
-           this.props.loading ? 
-           <Spin indicator={antIcon} />
-           
-          :
-          <Form {...layout} form={form} onFinish={this.onFinish} >
-            <Form.Item
-              name="username"
-              rules={[
-                {
-                  required: true,
-                  message: 'Please input your Username!',
-                },
-              ]}
-            >
-              <Input />
-            </Form.Item>
+    else{
+      let errorMessage = null;
+      if (this.props.error) {
+          errorMessage = (
+              <p>{this.props.error.message}</p>
+          );
+      }
+      const form = this.props.form;
       
-            <Form.Item
-                name="password"
+      return (
+        <div>
+          {errorMessage}
+           {
+             this.props.loading ? 
+             <Spin indicator={antIcon} />
+             
+            :
+            <Form {...layout} form={form} onFinish={this.onFinish} >
+              <Form.Item
+                name="username"
                 rules={[
                   {
                     required: true,
-                    message: 'Please input your Password!',
+                    message: 'Please input your Username!',
                   },
                 ]}
               >
-              <Input.Password />
-              
-            </Form.Item>
-      
-            <Form.Item {...tailLayout} name="remember" valuePropName="checked">
-              <Checkbox>Запомнить меня</Checkbox>
-            </Form.Item>
-      
-            <Form.Item {...tailLayout}>
-              <Button type="primary" htmlType="submit">
-                Войти
-              </Button>
-              Или
-              <NavLink 
-                style={{marginRight: '10px'}} 
-                to='/signup/'> Регистрация
-            </NavLink>
-            </Form.Item>
-          </Form>
-        }
-      </div>
-    );
+                <Input />
+              </Form.Item>
+        
+              <Form.Item
+                  name="password"
+                  rules={[
+                    {
+                      required: true,
+                      message: 'Please input your Password!',
+                    },
+                  ]}
+                >
+                <Input.Password />
+                
+              </Form.Item>
+        
+              <Form.Item {...tailLayout} name="remember" valuePropName="checked">
+                <Checkbox>Запомнить меня</Checkbox>
+              </Form.Item>
+        
+              <Form.Item {...tailLayout}>
+                <Button type="primary" htmlType="submit">
+                  Войти
+                </Button>
+                Или
+                <NavLink 
+                  style={{marginRight: '10px'}} 
+                  to='/signup/'> Регистрация
+              </NavLink>
+              </Form.Item>
+            </Form>
+          }
+        </div>
+      );
+    }
   }
 }
 
@@ -108,6 +113,7 @@ const mapStateToProps = (state) => {
     return {
         loading: state.loading,
         error: state.error,
+        token: state.token
     }
 }
 
