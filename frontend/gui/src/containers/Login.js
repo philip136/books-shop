@@ -1,9 +1,12 @@
 import React from 'react';
-import { Form, Input, Button, Checkbox } from 'antd';
+import { Form, Input, Button, Checkbox, Spin   } from 'antd';
 import * as actions from '../store/actions/auth';
 import {connect} from 'react-redux';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Redirect } from 'react-router-dom';
+import { LoadingOutlined }from '@ant-design/icons';
 
+
+const antIcon = <LoadingOutlined style={{ fontSize: 24 }} />
 
 const layout = {
   labelCol: {
@@ -20,68 +23,91 @@ const tailLayout = {
   },
 };
 
+function withMyHook(Component) {
+  return function WrappedComponent(props) {
+    const [form] = Form.useForm();
+    return <Component {...props} form={form} />;
+  }
+}
+
+
 class NormalLoginForm extends React.Component{
-  onFinish = (values) => { 
-    // check validation
-    this.props.onAuth(values.username, values.password);
+  onFinish = (value) => {
+    this.props.onAuth(value.username, value.password);
     this.props.history.push('/');
   }
 
-  
   render(){
+    let errorMessage = null;
+    if (this.props.error) {
+        errorMessage = (
+            <p>{this.props.error.message}</p>
+        );
+    }
+
+    const form = this.props.form;
 
     return (
-      <Form onFinish={this.onFinish}
-        {...layout}
-        name="basic"
-        initialValues={{
-          remember: true,
-        }}
-      >
-        <Form.Item
-          label="Имя пользователя"
-          name="username"
-          rules={[
-            {
-              required: true,
-              message: 'Пожалуйста, введите имя пользователя!',
-            },
-          ]}
-        >
-          <Input />
-        </Form.Item>
-  
-        <Form.Item
-          label="Пароль"
-          name="password"
-          rules={[
-            {
-              required: true,
-              message: 'Пожалуйста, введите пароль!',
-            },
-          ]}
-        >
-          <Input.Password />
-        </Form.Item>
-  
-        <Form.Item {...tailLayout} name="remember" valuePropName="checked">
-          <Checkbox>Запомнить меня</Checkbox>
-        </Form.Item>
-  
-        <Form.Item {...tailLayout}>
-          <Button type="primary" htmlType="submit">
-            Войти
-          </Button>
-        </Form.Item>
-      </Form>
+      <div>
+        {errorMessage}
+         {
+           this.props.loading ? 
+           <Spin indicator={antIcon} />
+           
+          :
+          <Form {...layout} form={form} onFinish={this.onFinish} >
+            <Form.Item
+              name="username"
+              rules={[
+                {
+                  required: true,
+                  message: 'Please input your Username!',
+                },
+              ]}
+            >
+              <Input />
+            </Form.Item>
+      
+            <Form.Item
+                name="password"
+                rules={[
+                  {
+                    required: true,
+                    message: 'Please input your Password!',
+                  },
+                ]}
+              >
+              <Input.Password />
+              
+            </Form.Item>
+      
+            <Form.Item {...tailLayout} name="remember" valuePropName="checked">
+              <Checkbox>Запомнить меня</Checkbox>
+            </Form.Item>
+      
+            <Form.Item {...tailLayout}>
+              <Button type="primary" htmlType="submit">
+                Войти
+              </Button>
+              Или
+              <NavLink 
+                style={{marginRight: '10px'}} 
+                to='/signup/'> Регистрация
+            </NavLink>
+            </Form.Item>
+          </Form>
+        }
+      </div>
     );
   }
 }
 
+const wrappedForm = withMyHook(NormalLoginForm);
+
 const mapStateToProps = (state) => {
     return {
         loading: state.loading,
-        error: state.error
+        error: state.error,
     }
 }
 
@@ -91,4 +117,4 @@ const mapDispatchToProps = dispatch => {
     }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(NormalLoginForm);
+export default connect(mapStateToProps, mapDispatchToProps)(wrappedForm);

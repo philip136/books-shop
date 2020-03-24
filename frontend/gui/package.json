@@ -10,8 +10,9 @@
     "axios": "^0.19.2",
     "bootstrap-4-react": "0.0.59",
     "create-react-app": "^3.4.0",
-    "react": "^16.13.0",
-    "react-dom": "^16.13.0",
+    "prop-types": "^15.7.2",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
     "react-redux": "^7.2.0",
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.4.0",
@@ -38,5 +39,10 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "envify": "^4.1.0",
+    "terser": "^4.6.7",
+    "uglifyify": "^5.0.2"
   }
 }

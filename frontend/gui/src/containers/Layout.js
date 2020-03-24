@@ -1,8 +1,9 @@
 import React from 'react';
 import { Layout, Menu, Breadcrumb } from 'antd';
 import { UserOutlined, LaptopOutlined, NotificationOutlined } from '@ant-design/icons';
-import { Link } from 'react-router-dom';
-
+import { Link, withRouter } from 'react-router-dom';
+import { connect } from 'react-redux';
+import * as actions from '../store/actions/auth';
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
 
@@ -18,23 +19,24 @@ const CustomLayout = (props) => {
               style={{ lineHeight: '64px' }}
             >
             
-              <Menu.Item key="1">
-                <Link to="/">Главная</Link>
-              </Menu.Item>
-              <Menu.Item key="2">Новинки</Menu.Item>
-              <Menu.Item key="3">Популярное</Menu.Item>
               {
                 props.isAuthenticated ?
                 
-                <Menu.Item key="4">
+                <Menu.Item key="4" onClick={props.logout}>
                   Выйти
                 </Menu.Item>
                 
                 :
                 <Menu.Item key="4">
-                  <Link to="/login">Авторизация</Link>
+                  <Link to="/login/">Вход</Link>
                 </Menu.Item>
               }
+
+              <Menu.Item key="1">
+                <Link to="/">Главная</Link>
+              </Menu.Item>
+              <Menu.Item key="2">Новинки</Menu.Item>
+              <Menu.Item key="3">Популярное</Menu.Item>
             </Menu>
           </Header>
           <Layout>
@@ -100,4 +102,10 @@ const CustomLayout = (props) => {
       );
 }
 
-export default CustomLayout;
+const mapDispatchToProps = dispatch => {
+  return {
+    logout: () => dispatch(actions.logout())
+  }
+}
+
+export default withRouter(connect(null, mapDispatchToProps)(CustomLayout));
