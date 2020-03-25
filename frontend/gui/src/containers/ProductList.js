@@ -25,7 +25,7 @@ class ProductList extends Component{
                 dataSource={this.state.products}
                 renderItem={item => (
                 <List.Item>
-                    <Product data={item}></Product>
+                    <Product data={item} />
                 </List.Item>
                 )}
             />

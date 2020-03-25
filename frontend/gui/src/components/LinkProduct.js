@@ -6,9 +6,12 @@ class LinkProduct extends React.Component{
     render(){
         return (
             <div>
-                <Button type="primary">
+                <Button
+                 type="primary"
+                 href={`/products/${this.props.link}/`}
+                 style={{marginTop: '10px'}}
+                 >
                     Просмотр
-                    <a href={`/${this.props.link}`}></a>
                 </Button>
             </div>
         );

@@ -1,6 +1,7 @@
 import React from 'react';
 import axios from 'axios';
-import Product from '../components/Product';
+import { Button } from 'antd';
+import { Card, Col, Row } from 'antd';
 
 
 class ProductDetail extends React.Component{
@@ -20,18 +21,22 @@ class ProductDetail extends React.Component{
     }
     render(){
         return (
-            <div className="productDetail">
-                <div className="product-headline">
-                    {this.state.product.name}
-                </div>
-                <div className="product-image">
-                    <img src={this.state.product.image}></img>
-                </div>
-                <div className="another-info">
-                    Цена:{this.state.product.price } BYN,
-                    Количество:{this.state.product.count}
-                </div>
-            </div>
+              <div className="site-card-wrapper">
+                <Row gutter={16}>
+                    <Col span={8}>
+                        <img src={this.state.product.image} width="300w"></img>
+                    </Col>
+                    <Col span={8} >
+                        <Card title={this.state.product.name} bordered={false}>
+                        <p>Цена: {this.state.product.price } BYN </p>
+                        <p>Количество: {this.state.product.count} </p>
+                        <Button type='primary' style={{marginTop: '30px'}}>
+                            Купить
+                        </Button>
+                    </Card>
+                  </Col>
+                </Row>
+              </div>
         );
     }
 

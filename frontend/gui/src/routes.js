@@ -9,7 +9,7 @@ import RegistrationForm from './containers/Signup';
 const BaseRouter = () => (
     <div>
         <Route exact path='/' component={ProductList} />
-        <Route exact path='/:productId' component={ProductDetail} />
+        <Route exact path='/products/:productId/' component={ProductDetail} />
         <Route exact path='/login/' component={Login} />
         <Route exact path='/signup/' component={RegistrationForm} />
     </div>

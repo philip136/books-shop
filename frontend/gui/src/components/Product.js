@@ -1,20 +1,25 @@
 import React from 'react'
 import LinkProduct from './LinkProduct';
+import { Card } from 'antd';
+
 
 
 class Product extends React.Component{
   render(){
+
+    const { Meta } = Card;
+    let description = `Цена: ${this.props.data.price} BYN`;
+
     return (
       <div className="product-container">
-          <div className="product-headline">{this.props.data.name}</div>
-          <div className="product-image">
-            <img src={this.props.data.image} width='60%' height='auto'></img>
-          </div>
-          <div className="product-description">
-            Количество товаров: {this.props.data.count}  
-            Цена: {this.props.data.price} BYN
-          </div>
-          <LinkProduct link={`/${this.props.data.id}`}/>
+          <Card
+            hoverable
+            style={{ width: 240 }}
+            cover={<img alt={this.props.data.name} src={this.props.data.image} />}
+          >
+            <Meta title={this.props.data.name} description={description} />
+            <LinkProduct link={`${this.props.data.id}`}/>
+          </Card>
       </div>
     );
   }
