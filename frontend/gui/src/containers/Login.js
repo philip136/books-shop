@@ -6,9 +6,9 @@ import { NavLink, Redirect } from 'react-router-dom';
 import { LoadingOutlined }from '@ant-design/icons';
 
 
-const antIcon = <LoadingOutlined style={{ fontSize: 24 }} />
+export const antIcon = <LoadingOutlined style={{ fontSize: 24 }} />
 
-const layout = {
+export const layout = {
   labelCol: {
     span: 8,
   },
@@ -16,14 +16,14 @@ const layout = {
     span: 16,
   },
 };
-const tailLayout = {
+export const tailLayout = {
   wrapperCol: {
     offset: 8,
     span: 16,
   },
 };
 
-function withMyHook(Component) {
+const withMyHook = (Component) =>{
   return function WrappedComponent(props) {
     const [form] = Form.useForm();
     return <Component {...props} form={form} />;
@@ -61,11 +61,12 @@ class NormalLoginForm extends React.Component{
             :
             <Form {...layout} form={form} onFinish={this.onFinish} >
               <Form.Item
+                label="Имя пользователя"
                 name="username"
                 rules={[
                   {
                     required: true,
-                    message: 'Please input your Username!',
+                    message: 'Пожалуйста введите ваше имя пользователя!',
                   },
                 ]}
               >
@@ -73,11 +74,12 @@ class NormalLoginForm extends React.Component{
               </Form.Item>
         
               <Form.Item
+                  label="Пароль"
                   name="password"
                   rules={[
                     {
                       required: true,
-                      message: 'Please input your Password!',
+                      message: 'Пожалуйста введите ваш пароль!',
                     },
                   ]}
                 >
@@ -90,7 +92,7 @@ class NormalLoginForm extends React.Component{
               </Form.Item>
         
               <Form.Item {...tailLayout}>
-                <Button type="primary" htmlType="submit">
+                <Button type="primary" htmlType="submit" style={{marginRight: '10px'}}>
                   Войти
                 </Button>
                 Или

@@ -1,92 +1,153 @@
 import React from 'react';
-import { Form, Input, Button } from 'antd';
+import { Form, Input, Button, Spin } from 'antd';
 import { connect } from 'react-redux';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Redirect } from 'react-router-dom';
 import * as actions from '../store/actions/auth';
+import {antIcon, layout, tailLayout} from './Login';
 
+
+
+function withMyHook(Component){
+    return function WrappedComponent(props) {
+      const [form] = Form.useForm();
+      return <Component {...props} form={form} />;
+    }
+  }
 
 class RegistrationForm extends React.Component {
 
-  onFinish = (values) => {
-    console.log(this.props);
-  }
+    onFinish = (values) => {
+        this.props.onAuth(
+                            values.username,
+                            values.email,
+                            values.password,
+                            values.confirm
+                          );
+    }
 
-  render() {
-
-    return (
-      <Form onSubmit={this.onFinish}>
+    render() {
+        const { token } = this.props;
         
-        <Form.Item label='username' name='username'
-            rules ={[ 
-                {
-                    required: true, 
-                    message: 'Please input your username!'
-                },
-             ]}
-             >
-                 <Input />
-        </Form.Item>
-        
-        <Form.Item label='email' name='email'
-        rules ={[ 
-            {
-                required: true, 
-                message: 'Please input your email!'
-            },
-         ]}
-         >
-             <Input />
-        </Form.Item>
-
-        <Form.Item label='password' name='password'
-            rules = {[
-            {
-                required: true,
-                message: 'Please input your password!',
+        if (token){
+            return <Redirect to="/" />
+        }
+        else{
+            let errorMessage = null;
+            if (this.props.error){
+                errorMessage = (
+                    <p>{this.props.error.message}</p>
+                );
             }
-              
-            ]}>
-                <Input.Password />
-        </Form.Item>
+            const form = this.props.form;
 
-        <Form.Item label='confirm' name='confirm'
-            rules = {[
-                {
-                    equired: true,
-                     message: 'Please confirm your password!',
-                }
-            ]}
-            >
-                <Input.Password />
-        </Form.Item>
+            return (
+               <div>
+                   {errorMessage}
+                   {this.props.loading ?
+                   
+                    <Spin indicator={antIcon} /> :
 
-        <Form.Item>
-        <Button type="primary" htmlType="submit" style={{marginRight: '10px'}}>
-            Зарегистрироваться
-        </Button>
-        Или
-        <NavLink 
-            style={{marginRight: '10px'}} 
-            to='/login/'> Войти
-        </NavLink>
-        </Form.Item>
-      </Form>
-    );
-  }
+                    
+                    <Form {...layout} form={form} onFinish={this.onFinish}>
+                        
+                        <Form.Item label='Имя пользователя' name='username'
+                            rules ={[ 
+                                {
+                                    required: true, 
+                                    message: 'Пожалуйста введите ваше имя пользователя!'
+                                },
+                            ]}
+                            >
+                                <Input />
+                        </Form.Item>
+                        
+                        <Form.Item label='Адрес электронной почты' name='email'
+                        rules ={[ 
+                            {
+                                type: 'email',
+                                message: 'Введен неверный E-mail!',
+                            },
+                            {
+                                required: true,
+                                message: 'Пожалуйста введите ваш электронный адрес!',
+                            },
+                        ]}
+                        >
+                            <Input />
+                        </Form.Item>
+            
+                        <Form.Item label='Пароль' name='password'
+                            rules = {[
+                            {
+                                required: true,
+                                message: 'Пожалуйста введите ваш пароль!',
+                            }
+                            ]}
+                        hasFeedback
+                        >
+                                <Input.Password />
+                        </Form.Item>
+            
+                        <Form.Item label='Подтверждение пароля' name='confirm'
+                            dependencies={['password']}
+                            hasFeedback
+                            rules = {[
+                                {
+                                    required: true,
+                                    message: 'Пожалуйста подтвердите ваш пароль!',
+                                },
+                                ({ getFieldValue }) => ({
+                                    validator(rule, value) {
+                                    if (!value || getFieldValue('password') === value) {
+                                        return Promise.resolve();
+                                    }
+                        
+                                    return Promise.reject(
+                                        'Два введенных вами пароля не совпадают!'
+                                        );
+                                    },
+                                }),
+                            ]}
+                            >
+                                <Input.Password />
+                        </Form.Item>
+            
+                        <Form.Item {...tailLayout}>
+                            <Button type="primary" htmlType="submit" style={{marginRight: '10px'}}>
+                                Зарегистрироваться
+                            </Button>
+                            Или
+                            <NavLink 
+                                style={{marginRight: '10px'}} 
+                                to='/login/'> Войти
+                            </NavLink>
+                        </Form.Item>
+                    </Form>
+                  }
+              </div> 
+            );
+        }
+
+        
+    }
 }
 
+const wrappedForm = withMyHook(RegistrationForm);
 
 const mapStateToProps = (state) => {
     return {
         loading: state.loading,
-        error: state.error
+        error: state.error,
+        token: state.token
     }
 }
 
 const mapDispatchToProps = dispatch => {
     return {
-        onAuth: (username, email, password1, password2) => dispatch(actions.authSignup(username, email, password1, password2)) 
+        onAuth: (username, email, password1, password2) => dispatch(
+            actions.authSignup(username, email, password1, password2)
+            ) 
     }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(RegistrationForm);
+export default connect(mapStateToProps, mapDispatchToProps)(wrappedForm);
