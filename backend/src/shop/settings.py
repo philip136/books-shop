@@ -74,6 +74,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
 }
 
@@ -97,6 +99,7 @@ DATABASES = {
         'PORT': '5432',
     }
 }
+os.environ['LC_ALL'] = "en_GB.UTF-8"
 
 
 # Password validation
