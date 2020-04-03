@@ -28,7 +28,8 @@ class CartItemSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = [
             'product',
-            'count'
+            'count',
+            'product_total'
         ]
 
     def validate_count(self, count):
@@ -38,11 +39,12 @@ class CartItemSerializer(serializers.ModelSerializer):
         product_count = int(product.count)
         count_items = int(count)
         if product_count < count_items:
-            raise serializers.ValidationError("Такое количество товаров нет на наличии")
+            raise serializers.ValidationError("Столько товаров нет в наличии")
         return count
 
 
 class CartSerializer(serializers.ModelSerializer):
+    products = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
@@ -50,4 +52,11 @@ class CartSerializer(serializers.ModelSerializer):
             'products',
             'cart_total',
         ]
+    
+    def get_products(self, obj):
+        products = CartItemSerializer(list(obj.products.all().values(
+                                        'product','count','product_total')),
+                                         many=True).data
+        return products
+
 
