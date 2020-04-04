@@ -44,19 +44,13 @@ class CartItemSerializer(serializers.ModelSerializer):
 
 
 class CartSerializer(serializers.ModelSerializer):
-    products = serializers.SerializerMethodField()
-
     class Meta:
         model = Cart
         fields = [
             'products',
-            'cart_total',
+            'cart_total'
         ]
+        depth = 2
     
-    def get_products(self, obj):
-        products = CartItemSerializer(list(obj.products.all().values(
-                                        'product','count','product_total')),
-                                         many=True).data
-        return products
 
 
