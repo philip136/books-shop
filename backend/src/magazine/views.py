@@ -6,7 +6,9 @@ from .models import (Product,
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.generics import (ListAPIView,
-                                     RetrieveAPIView)
+                                     RetrieveAPIView,
+                                     DestroyAPIView,
+                                     UpdateAPIView)
 from rest_framework.response import Response
 from rest_framework.permissions import (IsAdminUser,
                                         AllowAny,
@@ -45,7 +47,7 @@ class CartItemApi(RetrieveAPIView):
         product = request.data.get('product', None)
         if product is None:
             return Response({
-                'message': "Product doesn't exist!"
+                'message': "Продукт корзины не найден"
             })
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
@@ -80,7 +82,7 @@ class CartItemApi(RetrieveAPIView):
             cart.save()
             product.save()
             serializer.save()
-            return Response({'message': 'Success create cartItem'},
+            return Response({'message': 'Объект корзины успешной создан'},
                         status=status.HTTP_201_CREATED)
         return Response({'message': {serializer.errors}},
                         status=status.HTTP_400_BAD_REQUEST)
@@ -88,11 +90,85 @@ class CartItemApi(RetrieveAPIView):
 
 
 class CartApi(ListAPIView):
+    """
+    Api for show a cart 
+    """
     queryset = Cart.objects.all()
     serializer_class = CartSerializer
     permission_classes = (IsAuthenticated,)
 
 
+class DeleteItemApi(DestroyAPIView):
+    """ 
+    Api for delete item from cart
+    """
+    queryset = CartItem.objects.all()
+    permission_classes = (IsAuthenticated,)
+
+    def destroy(self, request, *args, **kwargs):
+        pk = kwargs['pk']
+        cart_item = CartItem.objects.get(pk=pk)
+        product = cart_item.product
+        try:
+            cart_id = request.session['cart_id']
+            cart = Cart.objects.get(pk=str(cart_id))
+            request.session['total'] = cart.products.count()
+        except:
+            cart = Cart()
+            cart.save()
+            cart_id = str(cart.id)
+            request.session['cart_id'] = str(cart_id)
+            cart = Cart.objects.get(pk=cart_id)
+        cart.remove_from_cart(product,cart_item.id)
+        return Response({'message': f'Продукт {product} удален из корзины'},
+                        status=status.HTTP_204_NO_CONTENT
+        )
+
+    
+class UpdateCartItemApi(UpdateAPIView):
+    """ 
+    Api for update cart item , for example common count
+    """
+    queryset = CartItem.objects.all()
+    serializer_class = CartItemSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def update(self, request, *args, **kwargs):
+        count = request.data.get('count', None)
+        if count is None:
+            return Response({'message': "Продукт корзины не найден"},
+                              status=status.HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            pk = self.kwargs['pk']
+            cart_item = CartItem.objects.get(pk=pk)
+            try:
+                cart_id = request.session['cart_id']
+                cart = Cart.objects.get(pk=str(cart_id))
+                request.session['total'] = cart.products.count()
+            except:
+                cart = Cart()
+                cart.save()
+                cart_id = str(cart.id)
+                request.session['cart_id'] = str(cart_id)
+                cart = Cart.objects.get(pk=cart_id)
+            cart.change_from_cart(count,cart_item)
+            cart.save()
+            serializer.save()
+            return Response({'message': 'Продукт корзины успешно изменен'},
+                              status=status.HTTP_200_OK)
+        return Response({'message': 'Введенные данные невалидны'})
+
+
+
+
+
+        
+        
+
+        
+
+        
 
         
 

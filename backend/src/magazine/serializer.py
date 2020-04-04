@@ -22,7 +22,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    product = serializers.ChoiceField(choices=[p for p in Product.objects.all()])
+    product = serializers.ChoiceField(choices=[p.name for p in Product.objects.all()])
 
     class Meta:
         model = CartItem
@@ -51,6 +51,7 @@ class CartSerializer(serializers.ModelSerializer):
             'cart_total'
         ]
         depth = 2
+    
     
 
 

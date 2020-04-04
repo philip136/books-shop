@@ -87,11 +87,22 @@ class Cart(models.Model):
             self.save()
 
     def remove_from_cart(self, product, cart_item_id):
-        cart_item = CartItem.objects.get(id=cart_item_id)
-        for cart_item in cart.products.all():
-            if cart_item.product == product:
-                self.products.remove(cart_item)
+        for _item in self.products.all():
+            if _item.product == product:
+                self.products.remove(_item)
+                product.count += _item.count
+                self.cart_total -= _item.product_total
                 self.save()
+    
+    def change_from_cart(self, count, cart_item):
+        cart_item.count = int(count)
+        cart_item.product_total = int(count) * Decimal(cart_item.product.price)
+        cart_item.save()
+        new_cart_total = 0.00
+        for item in self.products.all():
+            new_cart_total += float(item.product_total)
+        self.cart_total = new_cart_total
+        self.save()
 
 
 class Profile(models.Model):
