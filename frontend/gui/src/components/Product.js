@@ -6,7 +6,6 @@ import { Card } from 'antd';
 
 class Product extends React.Component{
   render(){
-
     const { Meta } = Card;
     let description = `Цена: ${this.props.data.price} BYN`;
 
@@ -18,7 +17,7 @@ class Product extends React.Component{
             cover={<img alt={this.props.data.name} src={this.props.data.image} />}
           >
             <Meta title={this.props.data.name} description={description} />
-            <LinkProduct link={`${this.props.data.id}`}/>
+              <LinkProduct link={`${this.props.data.id}`}/>
           </Card>
       </div>
     );

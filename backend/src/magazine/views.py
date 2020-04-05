@@ -44,7 +44,7 @@ class CartItemApi(RetrieveAPIView):
     permission_classes = [IsAuthenticated,]
 
     def post(self, request, *args, **kwargs):
-        product = request.data.get('product', None)
+        product = request.data.get('product_name', None)
         if product is None:
             return Response({
                 'message': "Продукт корзины не найден"
@@ -81,10 +81,9 @@ class CartItemApi(RetrieveAPIView):
             cart.cart_total = new_cart_total
             cart.save()
             product.save()
-            serializer.save()
             return Response({'message': 'Объект корзины успешной создан'},
                         status=status.HTTP_201_CREATED)
-        return Response({'message': {serializer.errors}},
+        return Response({'message': serializer.errors},
                         status=status.HTTP_400_BAD_REQUEST)
 
 

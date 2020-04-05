@@ -11,6 +11,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = [
+            'id',
             'name',
             'price',
             'delivery_time',
@@ -22,20 +23,20 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    product = serializers.ChoiceField(choices=[p.name for p in Product.objects.all()])
+    product_name = serializers.CharField(source='product.name')
 
     class Meta:
         model = CartItem
         fields = [
-            'product',
+            'product_name',
             'count',
             'product_total'
         ]
 
     def validate_count(self, count):
         data = self.get_initial()
-        product_name = data.get('product')
-        product = Product.objects.get(name=product_name)
+        product = data.get('product_name')
+        product = Product.objects.get(name=product)
         product_count = int(product.count)
         count_items = int(count)
         if product_count < count_items:
