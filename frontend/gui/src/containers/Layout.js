@@ -66,11 +66,11 @@ const CustomLayout = (props) => {
                   title={
                     <span>
                       <LaptopOutlined />
-                      Ваша корзина
+                        Ваша корзина
                     </span>
                   }
                 >
-                  <Menu.Item key="5">Корзина</Menu.Item>
+                  <Menu.Item key="5" onClick={() => props.history.push('/my-cart/')}>Корзина</Menu.Item>
                 </SubMenu>
                 <SubMenu
                   key="sub3"
@@ -101,6 +101,8 @@ const CustomLayout = (props) => {
         </Layout>
       );
 }
+
+
 
 const mapDispatchToProps = dispatch => {
   return {
