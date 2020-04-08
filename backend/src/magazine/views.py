@@ -2,7 +2,8 @@ from django.shortcuts import render
 from .models import (Product,
                      CartItem,
                      Cart,
-                     Order)
+                     Order,
+                     TypeProduct)
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.generics import (ListAPIView,
@@ -16,19 +17,47 @@ from rest_framework.permissions import (IsAdminUser,
 from django.shortcuts import get_object_or_404
 from .serializer import (ProductSerializer,
                          CartItemSerializer,
-                         CartSerializer)
+                         CartSerializer,
+                         TypeProductSerializer)
 from django.urls import reverse
 from django.http import QueryDict
 from decimal import Decimal
 
 
+
+class TypeProductsApi(RetrieveAPIView):
+    """
+    Api for any type products
+    """
+    lookup_field = 'type'
+    serializer_class = ProductSerializer
+    permission_classes = (AllowAny,)
+
+    def get(self, request, *args, **kwargs):
+        type = kwargs.get('type')
+        products = [product for product in self.get_queryset()]
+        return Response({f'Products: {type}': ProductSerializer(products,many=True).data})
+
+    def get_queryset(self):
+        type_name = self.kwargs.get('type')
+        type_obj = TypeProduct.objects.get(type=type_name)
+        products = Product.objects.filter(type=type_obj.id)
+        return products
+
+
 class ProductsApi(ListAPIView):
+    """ 
+    Api for any products
+    """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = (AllowAny,)
 
 
 class ProductDetailApi(RetrieveAPIView):
+    """
+    Api for any products detail
+    """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = (AllowAny, )
@@ -54,7 +83,7 @@ class CartItemApi(RetrieveAPIView):
             product = Product.objects.get(name=product)
             count = request.data.get('count', None)
             product_total = product.get_price() * int(count)
-            item = CartItem.objects.create(
+            item,_ = CartItem.objects.get_or_create(
                 product=product,
                 count=count,
                 product_total=Decimal(product_total)
@@ -74,14 +103,14 @@ class CartItemApi(RetrieveAPIView):
                 cart_id = str(cart.id)
                 request.session['cart_id'] = str(cart_id)
                 cart = Cart.objects.get(pk=cart_id)
-            cart.add_to_cart(item.id)
+            cart.add_to_cart(item)
             new_cart_total = 0.00
             for item in cart.products.all():
-                new_cart_total += float(item.product_total)
+                new_cart_total += float(item.product_total) 
             cart.cart_total = new_cart_total
             cart.save()
             product.save()
-            return Response({'message': 'Объект корзины успешной создан'},
+            return Response({'message': 'Объект корзины успешно создан'},
                         status=status.HTTP_201_CREATED)
         return Response({'message': serializer.errors},
                         status=status.HTTP_400_BAD_REQUEST)
@@ -92,9 +121,14 @@ class CartApi(ListAPIView):
     """
     Api for show a cart 
     """
-    queryset = Cart.objects.all()
     serializer_class = CartSerializer
     permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        cart_id = self.request.session['cart_id']
+        cart = Cart.objects.filter(id=cart_id)
+        self.request.session['total'] = cart[0].products.count()
+        return cart
 
 
 class DeleteItemApi(DestroyAPIView):

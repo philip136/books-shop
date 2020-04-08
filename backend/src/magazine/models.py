@@ -79,8 +79,9 @@ class Cart(models.Model):
         verbose_name = "Корзина"
         verbose_name_plural = "Корзины"
 
-    def add_to_cart(self, cart_item_id):
-        cart_item = CartItem.objects.get(id=cart_item_id)
+    def add_to_cart(self, cart_item):
+        cart_item = CartItem.objects.get(product__name=cart_item.product.name)
+        print(cart_item)
         if cart_item not in Cart.objects.all():
             self.products.add(cart_item)
             self.save()

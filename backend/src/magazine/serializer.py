@@ -2,12 +2,17 @@ from rest_framework import serializers
 from .models import (Product,
                      Cart,
                      CartItem,
-                     Order)
+                     Order,
+                     TypeProduct)
 
+
+class TypeProductSerializer(serializers.ModelDurationField):
+    class Meta:
+        model = TypeProduct
+        fields = '__all__'
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = Product
         fields = [
