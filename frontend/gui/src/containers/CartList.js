@@ -1,39 +1,13 @@
 import React from 'react';
 import { authAxios } from '../utils';
-import { myCartUrl } from '../constants';
+import { myCartUrl, deleteCartItemUrl  } from '../constants';
 import { connect } from 'react-redux';
 import { Table, Button, Spin } from 'antd';
 import * as actions from '../store/actions/auth';
 import { DeleteOutlined,LoadingOutlined } from '@ant-design/icons';
 
 
-
-const columns = [
-    {
-      title: 'Продукт',
-      dataIndex: 'name',
-      key: 'name',
-    },
-    {
-      title: 'Количество',
-      dataIndex: 'count',
-      key: 'count',
-    },
-    {
-      title: 'Стоимость',
-      dataIndex: 'price',
-      key: 'price',
-    },
-    {
-      title: 'Действия',
-      dataIndex: '',
-      key: 'del',
-      render: () => <a><DeleteOutlined /></a>,
-    },
-  ];
-
 const antIcon = <LoadingOutlined style={{ fontSize: 24 }} />
-
 
 class CartList extends React.Component{
     state = {
@@ -42,6 +16,15 @@ class CartList extends React.Component{
         loading: false,
         selectedRowKeys: [],
         dataTable: [],
+        columns: [
+            {title: 'Продукт',dataIndex: 'name',key: 'name',},
+            {title: 'Количество',dataIndex: 'count',key: 'count',},
+            {title: 'Стоимость',dataIndex: 'price',key: 'price',},
+            {title: 'Действия',dataIndex: '',key: 'del',
+              render: (product) => <a onClick={() => this.handleRemoveItem(product.key)}>
+                  <DeleteOutlined /></a>,
+            },
+          ],
     };
 
     componentDidMount(){
@@ -51,7 +34,7 @@ class CartList extends React.Component{
     handleFetchCart = () => {
         this.setState({loading: true});
         authAxios
-            .get(myCartUrl, {responseType: 'json'})
+            .get(myCartUrl)
                 .then(res => {
                     this.setState({data: res.data, loading: false});
                     this.getDate(res.data);
@@ -86,7 +69,7 @@ class CartList extends React.Component{
 
                 for (let j=0; j<products.length; j++){
                     newData.push({
-                        key: i,
+                        key: `${products[j]['id']}`,
                         name: `${products[j]['product']['name']}`,
                         count: `${products[j]['count']}`,
                         price: `${products[j]['product_total']} руб.`,
@@ -96,10 +79,21 @@ class CartList extends React.Component{
         }
         this.setState({dataTable: newData});
     };
+
+    handleRemoveItem = (product_id) => {
+        authAxios
+            .delete(deleteCartItemUrl(product_id))
+                .then(res => {
+                    this.handleFetchCart();
+                })
+                .catch(err => {
+                    this.setState({error: err});
+                });
+    };
     
 
     render() {
-        const { loading, selectedRowKeys, dataTable } = this.state;
+        const { loading, selectedRowKeys, dataTable, columns} = this.state;
         const rowSelection = {
             selectedRowKeys,
             onChange: this.onSelectChange,

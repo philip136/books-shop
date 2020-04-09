@@ -19,11 +19,14 @@ from .serializer import (ProductSerializer,
                          CartItemSerializer,
                          CartSerializer,
                          TypeProductSerializer)
+from django.contrib.sessions.backends.db import SessionStore
+from django.contrib.sessions.models import Session
 from django.urls import reverse
 from django.http import QueryDict
 from decimal import Decimal
 
 
+session_storage = SessionStore()
 
 class TypeProductsApi(RetrieveAPIView):
     """
@@ -77,7 +80,7 @@ class CartItemApi(RetrieveAPIView):
         if product is None:
             return Response({
                 'message': "Продукт корзины не найден"
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             product = Product.objects.get(name=product)
@@ -94,15 +97,11 @@ class CartItemApi(RetrieveAPIView):
             # create cart if session doesn't have her
             # else add cartItem to cart
             try:
-                cart_id = request.session['cart_id']
-                cart = Cart.objects.get(pk=str(cart_id))
-                request.session['total'] = cart.products.count()
+                cart = Cart.objects.get(owner=request.user.id)
             except:
                 cart = Cart()
+                cart.owner = request.user
                 cart.save()
-                cart_id = str(cart.id)
-                request.session['cart_id'] = str(cart_id)
-                cart = Cart.objects.get(pk=cart_id)
             cart.add_to_cart(item)
             new_cart_total = 0.00
             for item in cart.products.all():
@@ -125,9 +124,12 @@ class CartApi(ListAPIView):
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        cart_id = self.request.session['cart_id']
-        cart = Cart.objects.filter(id=cart_id)
-        self.request.session['total'] = cart[0].products.count()
+        try:
+            cart = Cart.objects.filter(owner=self.request.user.id)
+        except:
+            cart = Cart()
+            cart.owner = self.request.user
+            cart.save()
         return cart
 
 
@@ -143,15 +145,11 @@ class DeleteItemApi(DestroyAPIView):
         cart_item = CartItem.objects.get(pk=pk)
         product = cart_item.product
         try:
-            cart_id = request.session['cart_id']
-            cart = Cart.objects.get(pk=str(cart_id))
-            request.session['total'] = cart.products.count()
+            cart = Cart.objects.get(owner=request.user)
         except:
             cart = Cart()
+            cart.owner = request.user
             cart.save()
-            cart_id = str(cart.id)
-            request.session['cart_id'] = str(cart_id)
-            cart = Cart.objects.get(pk=cart_id)
         cart.remove_from_cart(product,cart_item.id)
         return Response({'message': f'Продукт {product} удален из корзины'},
                         status=status.HTTP_204_NO_CONTENT
@@ -176,18 +174,13 @@ class UpdateCartItemApi(UpdateAPIView):
             pk = self.kwargs['pk']
             cart_item = CartItem.objects.get(pk=pk)
             try:
-                cart_id = request.session['cart_id']
-                cart = Cart.objects.get(pk=str(cart_id))
-                request.session['total'] = cart.products.count()
+                cart = Cart.objects.get(owner=request.user)
             except:
                 cart = Cart()
+                cart.owner = request.user
                 cart.save()
-                cart_id = str(cart.id)
-                request.session['cart_id'] = str(cart_id)
-                cart = Cart.objects.get(pk=cart_id)
             cart.change_from_cart(count,cart_item)
             cart.save()
-            serializer.save()
             return Response({'message': 'Продукт корзины успешно изменен'},
                               status=status.HTTP_200_OK)
         return Response({'message': 'Введенные данные невалидны'})

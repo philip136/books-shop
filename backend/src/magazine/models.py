@@ -72,6 +72,7 @@ class CartItem(models.Model):
     
 
 class Cart(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
     products = models.ManyToManyField(CartItem)
     cart_total = models.DecimalField(max_digits=9,decimal_places=2, default=0.00)
 
@@ -81,7 +82,6 @@ class Cart(models.Model):
 
     def add_to_cart(self, cart_item):
         cart_item = CartItem.objects.get(product__name=cart_item.product.name)
-        print(cart_item)
         if cart_item not in Cart.objects.all():
             self.products.add(cart_item)
             self.save()
