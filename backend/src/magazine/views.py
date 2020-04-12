@@ -19,14 +19,10 @@ from .serializer import (ProductSerializer,
                          CartItemSerializer,
                          CartSerializer,
                          TypeProductSerializer)
-from django.contrib.sessions.backends.db import SessionStore
-from django.contrib.sessions.models import Session
 from django.urls import reverse
 from django.http import QueryDict
 from decimal import Decimal
 
-
-session_storage = SessionStore()
 
 class TypeProductsApi(RetrieveAPIView):
     """
@@ -86,19 +82,28 @@ class CartItemApi(RetrieveAPIView):
             product = Product.objects.get(name=product)
             count = request.data.get('count', None)
             product_total = product.get_price() * int(count)
-            item,_ = CartItem.objects.get_or_create(
-                product=product,
-                count=count,
-                product_total=Decimal(product_total)
-            )
+            try:
+                item = CartItem.objects.get(
+                    product=product
+                )
+                cart = Cart.objects.filter(owner=request.user,products=item)
+                if len(cart) > 0:
+                    return Response({'message': 'Данный продукт уже есть у вас в корзине'},
+                        status=status.HTTP_200_OK
+                    )
+            except CartItem.DoesNotExist:
+                item = CartItem.objects.create(
+                    product=product,
+                    count=count,
+                    product_total=Decimal(product_total)
+                )
+                item.save()
             count_after = product.get_count - int(count)
             product.set_count = count_after
-            item.save()
-            # create cart if session doesn't have her
-            # else add cartItem to cart
+
             try:
                 cart = Cart.objects.get(owner=request.user.id)
-            except:
+            except Cart.DoesNotExist:
                 cart = Cart()
                 cart.owner = request.user
                 cart.save()
@@ -115,7 +120,6 @@ class CartItemApi(RetrieveAPIView):
                         status=status.HTTP_400_BAD_REQUEST)
 
 
-
 class CartApi(ListAPIView):
     """
     Api for show a cart 
@@ -126,7 +130,7 @@ class CartApi(ListAPIView):
     def get_queryset(self):
         try:
             cart = Cart.objects.filter(owner=self.request.user.id)
-        except:
+        except Cart.DoesNotExist:
             cart = Cart()
             cart.owner = self.request.user
             cart.save()
@@ -146,11 +150,11 @@ class DeleteItemApi(DestroyAPIView):
         product = cart_item.product
         try:
             cart = Cart.objects.get(owner=request.user)
-        except:
+        except Cart.DoesNotExist:
             cart = Cart()
             cart.owner = request.user
             cart.save()
-        cart.remove_from_cart(product,cart_item.id)
+        cart.remove_from_cart(product, cart_item.id)
         return Response({'message': f'Продукт {product} удален из корзины'},
                         status=status.HTTP_204_NO_CONTENT
         )
@@ -175,11 +179,11 @@ class UpdateCartItemApi(UpdateAPIView):
             cart_item = CartItem.objects.get(pk=pk)
             try:
                 cart = Cart.objects.get(owner=request.user)
-            except:
+            except Cart.DoesNotExist:
                 cart = Cart()
                 cart.owner = request.user
                 cart.save()
-            cart.change_from_cart(count,cart_item)
+            cart.change_from_cart(count, cart_item)
             cart.save()
             return Response({'message': 'Продукт корзины успешно изменен'},
                               status=status.HTTP_200_OK)

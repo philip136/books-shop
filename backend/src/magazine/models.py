@@ -5,7 +5,6 @@ from decimal import Decimal
 from django.contrib.auth.models import User
 
 
-
 class TypeProduct(models.Model):
     """ Type product: books, notepads and etc """
     type = models.CharField(max_length=50)
@@ -67,18 +66,20 @@ class CartItem(models.Model):
         verbose_name_plural = "Продукты корзины"
 
     def __str__(self):
-        return f'Cart Item {self.product.name}'
-    
+        return f'Объект корзины {self.product.name}'
     
 
 class Cart(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     products = models.ManyToManyField(CartItem)
-    cart_total = models.DecimalField(max_digits=9,decimal_places=2, default=0.00)
+    cart_total = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
 
     class Meta:
         verbose_name = "Корзина"
         verbose_name_plural = "Корзины"
+    
+    def __str__(self):
+        return f'Корзина пользователя {self.owner.username}'
 
     def add_to_cart(self, cart_item):
         cart_item = CartItem.objects.get(product__name=cart_item.product.name)
@@ -111,8 +112,6 @@ class Profile(models.Model):
     class Meta:
         verbose_name = "Профиль"
         verbose_name_plural = "Профили"
-    
-    
     
 
 class Order(models.Model):

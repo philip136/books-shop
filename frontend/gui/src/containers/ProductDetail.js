@@ -55,9 +55,14 @@ class ProductDetail extends React.Component{
             .then(res => {
                 this.props.refreshCart();
                 this.setState({loading: false});
+                if (res.status == 200){
+                    message.warning(res.data['message']);
+                }
+                else {message.success(res.data['message']);}
             })
             .catch(err => {
-                this.setState({error: err})
+                this.setState({error: err});
+                message.error(err);
             });
     };
 
@@ -78,7 +83,6 @@ class ProductDetail extends React.Component{
 
         return (
         <div className="site-card-wrapper">
-            {error}
             {
                 loading ? 
                 <Spin indicator={antIcon} />

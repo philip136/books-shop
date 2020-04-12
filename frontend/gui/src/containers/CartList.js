@@ -1,27 +1,36 @@
 import React from 'react';
 import { authAxios } from '../utils';
-import { myCartUrl, deleteCartItemUrl  } from '../constants';
+import { myCartUrl, deleteCartItemUrl, updateCartItemUrl } from '../constants';
 import { connect } from 'react-redux';
-import { Table, Button, Spin } from 'antd';
+import {Table, Button, Spin, message, Form, Input} from 'antd';
 import * as actions from '../store/actions/auth';
-import { DeleteOutlined,LoadingOutlined } from '@ant-design/icons';
+import { DeleteOutlined,LoadingOutlined,EditOutlined } from '@ant-design/icons';
 
 
-const antIcon = <LoadingOutlined style={{ fontSize: 24 }} />
+const antIcon = <LoadingOutlined style={{fontSize: 24}} />
 
 class CartList extends React.Component{
     state = {
         data: [],
         error: null,
         loading: false,
+        showPopup: false,
+        changedCount: null,
         selectedRowKeys: [],
         dataTable: [],
         columns: [
             {title: 'Продукт',dataIndex: 'name',key: 'name',},
-            {title: 'Количество',dataIndex: 'count',key: 'count',},
+            {title: 'Количество',dataIndex: 'count',key: 'count', editable: true,
+            render: (text,record) =>  this.state.showPopup ?
+                (<Input type='number' defaultValue={record.count} min='1' step='1'
+                onChange={(e) => this.changeCount(e.target.value)} />) : (text), },
             {title: 'Стоимость',dataIndex: 'price',key: 'price',},
-            {title: 'Действия',dataIndex: '',key: 'del',
-              render: (product) => <a onClick={() => this.handleRemoveItem(product.key)}>
+            {title: 'Изменить', dataIndex: '', key: 'update',
+                render: (product) => <a onClick={() => this.openChange(product)}>
+                <EditOutlined /></a>
+            },
+            {title: 'Удалить',dataIndex: '',key: 'del',
+                render: (product) => <a onClick={() => this.handleRemoveItem(product.key)}>
                   <DeleteOutlined /></a>,
             },
           ],
@@ -29,7 +38,7 @@ class CartList extends React.Component{
 
     componentDidMount(){
         this.handleFetchCart();
-    }
+    };
 
     handleFetchCart = () => {
         this.setState({loading: true});
@@ -37,14 +46,12 @@ class CartList extends React.Component{
             .get(myCartUrl)
                 .then(res => {
                     this.setState({data: res.data, loading: false});
-                    this.getDate(res.data);
+                    this.formatingData(res.data);
                 })
                 .catch(err => {
                     this.setState({error: err})
                 });
     };
-
-
 
     start = () => {
         this.setState({ loading: true });
@@ -57,11 +64,15 @@ class CartList extends React.Component{
         }, 1000);
     };
 
+    changeCount = (value) => {
+        this.setState({changedCount: value});
+    };
+
     onSelectChange = selectedRowKeys => {
         this.setState({ selectedRowKeys });
     };
 
-    getDate = (data) => {
+    formatingData = (data) => {
         const newData = [];
         for (let i=0; i<data.length; i++){
             if (data[i]['products'] !== []){
@@ -78,6 +89,29 @@ class CartList extends React.Component{
             }
         }
         this.setState({dataTable: newData});
+    };
+
+    handleChangeItem = (id, name) => {
+        const {changedCount} = this.state;
+        const product_name = name;
+        const count = changedCount;
+        authAxios
+            .put(updateCartItemUrl(id), {product_name, count})
+            .then(res => {
+                this.handleFetchCart();
+            })
+            .catch(err => {
+                this.setState({error: err});
+            });
+        };
+
+    openChange = (product_id) => {
+        if (!this.state.showPopup){this.setState({showPopup: true});}
+        else {this.setState({showPopup: false});
+            if (this.state.changedCount != null){
+                this.handleChangeItem(product_id.key, product_id.name);
+            }
+        }
     };
 
     handleRemoveItem = (product_id) => {
@@ -100,7 +134,7 @@ class CartList extends React.Component{
         };
         const hasSelected = selectedRowKeys.length > 0;
 
-        return (            
+        return (
             <div>
                 {loading ?
                 <Spin indicator={antIcon} />
@@ -109,7 +143,7 @@ class CartList extends React.Component{
                     <span style={{ marginLeft: 8 }}>
                         {hasSelected ? `Выбрано ${selectedRowKeys.length} продуктов` : ''}
                     </span>
-                    <Table dataSource={dataTable} columns={columns} rowSelection={rowSelection} />
+                        <Table dataSource={dataTable} columns={columns} rowSelection={rowSelection} />
                 </div>
                 }
             </div>
