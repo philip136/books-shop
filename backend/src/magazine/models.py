@@ -3,6 +3,7 @@ from sorl.thumbnail import ImageField
 from django.conf import settings
 from decimal import Decimal
 from django.contrib.auth.models import User
+import datetime
 
 
 class TypeProduct(models.Model):
@@ -15,7 +16,7 @@ class TypeProduct(models.Model):
 
     def __str__(self):
         return self.type
-    
+
 
 class Product(models.Model):
     name = models.CharField(max_length=100)
@@ -81,9 +82,10 @@ class Cart(models.Model):
     def __str__(self):
         return f'Корзина пользователя {self.owner.username}'
 
-    def add_to_cart(self, cart_item):
-        cart_item = CartItem.objects.get(product__name=cart_item.product.name)
-        if cart_item not in Cart.objects.all():
+    def add_to_cart(self, cart_item, owner):
+        cart_item = CartItem.objects.get(id=cart_item.id)
+        cart_owner = Cart.objects.filter(owner=owner)
+        if cart_item not in cart_owner:
             self.products.add(cart_item)
             self.save()
 
@@ -116,12 +118,12 @@ class Profile(models.Model):
 
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    items = models.ManyToManyField(Cart)
+    items = models.ForeignKey(Cart, on_delete=models.CASCADE)
     total_price = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
-    phone = models.CharField(max_length=12)
-    date = models.DateTimeField(auto_now_add=True)
+    phone = models.CharField(max_length=13)
+    date = models.DateTimeField(default=datetime.date.today)
     purchase_type = models.CharField(max_length=30, choices=ORDER_TYPE_OF_PURCHASE, default="Самовывоз")
     status = models.CharField(max_length=30, choices=ORDER_STATUS_CHOICES)
 

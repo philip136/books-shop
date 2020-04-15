@@ -14,6 +14,7 @@ class CartList extends React.Component{
         data: [],
         error: null,
         loading: false,
+        total: 0,
         showPopup: false,
         changedCount: null,
         selectedRowKeys: [],
@@ -88,7 +89,7 @@ class CartList extends React.Component{
                 }
             }
         }
-        this.setState({dataTable: newData});
+        this.setState({dataTable: newData, total: data[0]['cart_total']});
     };
 
     handleChangeItem = (id, name) => {
@@ -127,7 +128,7 @@ class CartList extends React.Component{
     
 
     render() {
-        const { loading, selectedRowKeys, dataTable, columns} = this.state;
+        const { loading, selectedRowKeys, dataTable, total, columns} = this.state;
         const rowSelection = {
             selectedRowKeys,
             onChange: this.onSelectChange,
@@ -143,7 +144,10 @@ class CartList extends React.Component{
                     <span style={{ marginLeft: 8 }}>
                         {hasSelected ? `Выбрано ${selectedRowKeys.length} продуктов` : ''}
                     </span>
-                        <Table dataSource={dataTable} columns={columns} rowSelection={rowSelection} />
+                        <Table dataSource={dataTable} columns={columns} rowSelection={rowSelection}
+                        footer={() => `Итого: ${total}руб`}
+                        />
+
                 </div>
                 }
             </div>

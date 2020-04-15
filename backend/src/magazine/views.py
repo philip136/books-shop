@@ -11,6 +11,7 @@ from rest_framework.generics import (ListAPIView,
                                      DestroyAPIView,
                                      UpdateAPIView)
 from rest_framework.response import Response
+from rest_framework.mixins import CreateModelMixin
 from rest_framework.permissions import (IsAdminUser,
                                         AllowAny,
                                         IsAuthenticated)
@@ -18,9 +19,11 @@ from django.shortcuts import get_object_or_404
 from .serializer import (ProductSerializer,
                          CartItemSerializer,
                          CartSerializer,
-                         TypeProductSerializer)
+                         TypeProductSerializer,
+                         OrderSerializer)
 from django.urls import reverse
 from django.http import QueryDict
+from django.core.exceptions import ObjectDoesNotExist
 from decimal import Decimal
 
 
@@ -33,13 +36,12 @@ class TypeProductsApi(RetrieveAPIView):
     permission_classes = (AllowAny,)
 
     def get(self, request, *args, **kwargs):
-        type = kwargs.get('type')
         products = [product for product in self.get_queryset()]
-        return Response({f'Products: {type}': ProductSerializer(products,many=True).data})
+        return Response({'Products': ProductSerializer(products, many=True).data})
 
     def get_queryset(self):
         type_name = self.kwargs.get('type')
-        type_obj = TypeProduct.objects.get(type=type_name)
+        type_obj = TypeProduct.objects.get(type__icontains=type_name)
         products = Product.objects.filter(type=type_obj.id)
         return products
 
@@ -59,7 +61,7 @@ class ProductDetailApi(RetrieveAPIView):
     """
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = (AllowAny, )
+    permission_classes = (AllowAny,)
 
 
 class CartItemApi(RetrieveAPIView):
@@ -69,7 +71,7 @@ class CartItemApi(RetrieveAPIView):
 
     queryset = CartItem.objects.all()
     serializer_class = CartItemSerializer
-    permission_classes = [IsAuthenticated,]
+    permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
         product = request.data.get('product_name', None)
@@ -83,31 +85,35 @@ class CartItemApi(RetrieveAPIView):
             count = request.data.get('count', None)
             product_total = product.get_price() * int(count)
             try:
-                item = CartItem.objects.get(
+                item = CartItem.objects.filter(
                     product=product
-                )
-                cart = Cart.objects.filter(owner=request.user,products=item)
-                if len(cart) > 0:
+                ).first()
+                cart = Cart.objects.get(owner=request.user)
+                if item in cart.products.all():
                     return Response({'message': 'Данный продукт уже есть у вас в корзине'},
-                        status=status.HTTP_200_OK
-                    )
-            except CartItem.DoesNotExist:
+                                    status=status.HTTP_200_OK
+                                    )
+                else:
+                    raise ObjectDoesNotExist
+
+            except ObjectDoesNotExist:
                 item = CartItem.objects.create(
                     product=product,
                     count=count,
                     product_total=Decimal(product_total)
                 )
                 item.save()
+
             count_after = product.get_count - int(count)
             product.set_count = count_after
 
             try:
-                cart = Cart.objects.get(owner=request.user.id)
+                cart = Cart.objects.get(owner=request.user)
             except Cart.DoesNotExist:
                 cart = Cart()
                 cart.owner = request.user
                 cart.save()
-            cart.add_to_cart(item)
+            cart.add_to_cart(item, request.user)
             new_cart_total = 0.00
             for item in cart.products.all():
                 new_cart_total += float(item.product_total) 
@@ -115,7 +121,7 @@ class CartItemApi(RetrieveAPIView):
             cart.save()
             product.save()
             return Response({'message': 'Объект корзины успешно создан'},
-                        status=status.HTTP_201_CREATED)
+                            status=status.HTTP_201_CREATED)
         return Response({'message': serializer.errors},
                         status=status.HTTP_400_BAD_REQUEST)
 
@@ -129,7 +135,7 @@ class CartApi(ListAPIView):
 
     def get_queryset(self):
         try:
-            cart = Cart.objects.filter(owner=self.request.user.id)
+            cart = Cart.objects.filter(owner=self.request.user)
         except Cart.DoesNotExist:
             cart = Cart()
             cart.owner = self.request.user
@@ -157,7 +163,7 @@ class DeleteItemApi(DestroyAPIView):
         cart.remove_from_cart(product, cart_item.id)
         return Response({'message': f'Продукт {product} удален из корзины'},
                         status=status.HTTP_204_NO_CONTENT
-        )
+                        )
 
     
 class UpdateCartItemApi(UpdateAPIView):
@@ -172,7 +178,7 @@ class UpdateCartItemApi(UpdateAPIView):
         count = request.data.get('count', None)
         if count is None:
             return Response({'message': "Продукт корзины не найден"},
-                              status=status.HTTP_400_BAD_REQUEST)
+                            status=status.HTTP_400_BAD_REQUEST)
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid():
             pk = self.kwargs['pk']
@@ -186,8 +192,26 @@ class UpdateCartItemApi(UpdateAPIView):
             cart.change_from_cart(count, cart_item)
             cart.save()
             return Response({'message': 'Продукт корзины успешно изменен'},
-                              status=status.HTTP_200_OK)
+                            status=status.HTTP_200_OK)
         return Response({'message': 'Введенные данные невалидны'})
+
+
+class OrderSuccessApi(CreateModelMixin, RetrieveAPIView):
+    """
+    Api for create order and moving to courier
+    """
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            return Response({'message': serializer.data}, status=status.HTTP_201_CREATED)
+        return Response({'message': serializer.data}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
 
 
