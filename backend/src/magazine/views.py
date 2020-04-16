@@ -207,6 +207,9 @@ class OrderSuccessApi(CreateModelMixin, RetrieveAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
+            # check if type of purchase 'самовывоз' return message response -> look on the map with shop
+            # if type of purchase 'курьером' check person users which is available
+            # if is than send client geo position
             return Response({'message': serializer.data}, status=status.HTTP_201_CREATED)
         return Response({'message': serializer.data}, status=status.HTTP_400_BAD_REQUEST)
 

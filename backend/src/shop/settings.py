@@ -89,6 +89,8 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
+# login: philip; password: test12345
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
@@ -120,9 +122,13 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+REST_AUTH_REGISTER_SERIALIZERS = {
+    'REGISTER_SERIALIZER': 'magazine.serializer.RegisterSerializer',
+}
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
+
+GOOGLE_MAPS_API_KEY = 'AIzaSyAVSBjiIkTUhr2NGv30bLUXA1ADmDf3FeU'
 
 LANGUAGE_CODE = 'en-us'
 

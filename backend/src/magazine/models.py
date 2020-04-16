@@ -3,6 +3,7 @@ from sorl.thumbnail import ImageField
 from django.conf import settings
 from decimal import Decimal
 from django.contrib.auth.models import User
+from django_google_maps import fields as map_fields
 import datetime
 
 
@@ -45,22 +46,10 @@ class Product(models.Model):
         self.count = new_count
 
 
-ORDER_STATUS_CHOICES = [
-    ("Принят к обработке", "Принят к обработке"),
-    ("Выполняется", "Выполняется"),
-    ("Оплачен", "Оплачен"),
-]
-
-ORDER_TYPE_OF_PURCHASE = [
-    ("Доставка курьером", "Доставка курьером"),
-    ("Самовывоз", "Самовывоз"),
-]
-
-
 class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     count = models.PositiveIntegerField(default=1)
-    product_total = models.DecimalField(max_digits=9,decimal_places=2, default=0.00)
+    product_total = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
 
     class Meta:
         verbose_name = "Продукт корзины"
@@ -108,13 +97,46 @@ class Cart(models.Model):
         self.save()
 
 
+ORDER_STATUS_CHOICES = [
+    ("Принят к обработке", "Принят к обработке"),
+    ("Выполняется", "Выполняется"),
+    ("Оплачен", "Оплачен"),
+]
+
+ORDER_TYPE_OF_PURCHASE = [
+    ("Доставка курьером", "Доставка курьером"),
+    ("Самовывоз", "Самовывоз"),
+]
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
+    address = map_fields.AddressField(max_length=150)
+    geolocation = map_fields.GeoLocationField(max_length=100)
+    busy = models.BooleanField(default=False)
+    payment = models.BooleanField(default=False)
+    courier = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name='profile_as_courier'
+    )
+    client = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.DO_NOTHING,
+        related_name='profile_as_client'
+    )
 
     class Meta:
         verbose_name = "Профиль"
         verbose_name_plural = "Профили"
-    
+
+    def __str__(self):
+        return f'Профиль пользователя: {self.user.username}'
+
 
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
@@ -133,6 +155,19 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Заказ номер {self.id}"
+
+    def setup_driver(self, user):
+        couriers = Profile.objects.filter(is_staff=True,
+                                          is_active=True,
+                                          busy=False)
+        client = Profile.objects.get(user=user)
+        if len(couriers) > 0:
+            courier = Profile.objects.get(user__profile=couriers.first())
+            courier.client = client
+            courier.save()
+            return courier
+        return 'Простите мы не можем доставить ваш товар сейчас так как'\
+               ' сейчас нет свободных курьеров!'
     
 
     
