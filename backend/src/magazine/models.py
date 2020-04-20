@@ -3,7 +3,8 @@ from sorl.thumbnail import ImageField
 from django.conf import settings
 from decimal import Decimal
 from django.contrib.auth.models import User
-from django_google_maps import fields as map_fields
+from django.contrib.gis.db import models as models_gis
+from django.contrib.gis.geos import Point
 import datetime
 
 
@@ -109,10 +110,32 @@ ORDER_TYPE_OF_PURCHASE = [
 ]
 
 
+class Location(models.Model):
+    title = models.TextField(max_length=150)
+    description = models.TextField(blank=True, null=True)
+    address = models.CharField(max_length=250, blank=True, null=True)
+    point = models_gis.PointField(default='POINT(0 0)', srid=4326)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Геолокация"
+        verbose_name_plural = "Геолокации"
+
+    def __str__(self):
+        return f'Aдрес: {self.address}'
+
+    @property
+    def longitude(self):
+        return self.point[0]
+
+    @property
+    def latitude(self):
+        return self.point[1]
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    address = map_fields.AddressField(max_length=150)
-    geolocation = map_fields.GeoLocationField(max_length=100)
     busy = models.BooleanField(default=False)
     payment = models.BooleanField(default=False)
     courier = models.ForeignKey(
@@ -129,6 +152,7 @@ class Profile(models.Model):
         on_delete=models.DO_NOTHING,
         related_name='profile_as_client'
     )
+    location = models.ForeignKey(Location, on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
         verbose_name = "Профиль"

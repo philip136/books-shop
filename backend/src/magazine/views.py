@@ -3,13 +3,16 @@ from .models import (Product,
                      CartItem,
                      Cart,
                      Order,
-                     TypeProduct)
+                     TypeProduct,
+                     Location)
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.generics import (ListAPIView,
                                      RetrieveAPIView,
                                      DestroyAPIView,
-                                     UpdateAPIView)
+                                     UpdateAPIView,
+                                     ListCreateAPIView,
+                                     RetrieveUpdateDestroyAPIView)
 from rest_framework.response import Response
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.permissions import (IsAdminUser,
@@ -20,7 +23,8 @@ from .serializer import (ProductSerializer,
                          CartItemSerializer,
                          CartSerializer,
                          TypeProductSerializer,
-                         OrderSerializer)
+                         OrderSerializer,
+                         LocationSerializer)
 from django.urls import reverse
 from django.http import QueryDict
 from django.core.exceptions import ObjectDoesNotExist
@@ -164,6 +168,25 @@ class DeleteItemApi(DestroyAPIView):
         return Response({'message': f'Продукт {product} удален из корзины'},
                         status=status.HTTP_204_NO_CONTENT
                         )
+
+
+class LocationList(ListCreateAPIView):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+
+    def list(self, request):
+        self.serializer_class = LocationSerializer
+        return super(LocationList, self).list(request)
+
+
+class LocationDetail(RetrieveUpdateDestroyAPIView):
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        queryset = self.get_object()
+        serializer = LocationSerializer(queryset, many=False)
+        return Response(serializer.data)
 
     
 class UpdateCartItemApi(UpdateAPIView):

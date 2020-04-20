@@ -1,27 +1,25 @@
 from django.contrib import admin
-from django_google_maps import widgets as map_widgets
-from django_google_maps import fields as map_fields
+from django.contrib.gis import admin
+from django.contrib.gis.geos import GEOSGeometry
 from .models import (Product,
                      TypeProduct,
                      CartItem,
                      Cart,
                      Order,
-                     Profile)
+                     Profile,
+                     Location)
 
+
+class LocationAdmin(admin.OSMGeoAdmin):
+    list_display = ['title', 'address', 'longitude', 'latitude']
+    search_fields = ['title', 'address']
+
+
+admin.site.register(Location, LocationAdmin)
 admin.site.register(Product)
 admin.site.register(TypeProduct)
 admin.site.register(CartItem)
 admin.site.register(Cart)
 admin.site.register(Order)
-
-
-class ProfileAdmin(admin.ModelAdmin):
-    formfield_overrides = {
-        map_fields.AddressField: {'widget': map_widgets.GoogleMapsAddressWidget(
-            attrs={'data-map-type': 'roadmap'}
-        )},
-    }
-
 admin.site.register(Profile)
 
-# Register your models here.

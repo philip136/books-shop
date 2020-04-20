@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.gis',
     'magazine',
     'django.contrib.sites',
     'allauth',
@@ -93,15 +94,14 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
         'NAME': 'tpyqiygo',
-        'USER': 'tpyqiygo',
-        'PASSWORD': 'EZUqJ3TGbXf8Tjd20tXFkdhpmgpEsRil',
-        'HOST': 'drona.db.elephantsql.com',
+        'USER': 'postgres',
+        'PASSWORD': 'admin',
+        'HOST': '127.0.0.1',
         'PORT': '5432',
     }
 }
-os.environ['LC_ALL'] = "en_GB.UTF-8"
 
 
 # Password validation

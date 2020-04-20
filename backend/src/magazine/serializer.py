@@ -9,7 +9,8 @@ from .models import (Product,
                      CartItem,
                      Order,
                      TypeProduct,
-                     Profile)
+                     Profile,
+                     Location)
 from django.contrib.auth.models import User
 import datetime
 import re
@@ -60,7 +61,21 @@ class RegisterSerializer(serializers.Serializer):
         return user
 
 
-class TypeProductSerializer(serializers.ModelDurationField):
+class LocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = [
+            'id',
+            'title',
+            'description',
+            'address',
+            'latitude',
+            'longitude',
+        ]
+        read_only_fields = fields
+
+
+class TypeProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = TypeProduct
         fields = '__all__'
