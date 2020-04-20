@@ -10,7 +10,8 @@ from .models import (Product,
                      Order,
                      TypeProduct,
                      Profile,
-                     Location)
+                     Location,
+                     Shop)
 from django.contrib.auth.models import User
 import datetime
 import re
@@ -143,6 +144,18 @@ class CartSerializer(serializers.ModelSerializer):
         depth = 2
 
 
+class ShopSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Shop
+        fields = [
+            'name',
+            'position',
+            'starts_working',
+            'finishes_working',
+        ]
+        read_only_fields = fields
+
+
 class OrderSerializer(serializers.ModelSerializer):
     user = serializers.CharField(source='user.username')
     items = serializers.SerializerMethodField('_items')
@@ -165,6 +178,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'purchase_type',
             'status',
         ]
+        read_only_fields = ''
 
     def validate_phone(self, phone):
         result = re.match(r'^\+375(17|29|33|44)[0-9]{3}[0-9]{2}[0-9]{2}$', phone)
@@ -186,6 +200,7 @@ class OrderSerializer(serializers.ModelSerializer):
         if result is None:
             raise serializers.ValidationError("Фамилия должна содержать только буквы, "
                                               "и ее длина не должна быть меньше 3")
+        return result
 
     def _date(self, obj):
         return datetime.date.today()

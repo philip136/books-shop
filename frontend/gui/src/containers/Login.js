@@ -23,7 +23,7 @@ export const tailLayout = {
   },
 };
 
-const withMyHook = (Component) =>{
+export const withMyHook = (Component) =>{
   return function WrappedComponent(props) {
     const [form] = Form.useForm();
     return <Component {...props} form={form} />;

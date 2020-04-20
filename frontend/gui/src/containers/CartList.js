@@ -147,7 +147,7 @@ class CartList extends React.Component{
                         <Table dataSource={dataTable} columns={columns} rowSelection={rowSelection}
                         footer={() => `Итого: ${total}руб`}
                         />
-
+                    <Button href="/my-order/" type="primary">Оформить заказ</Button>
                 </div>
                 }
             </div>

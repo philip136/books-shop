@@ -4,8 +4,10 @@ from .models import (Product,
                      Cart,
                      Order,
                      TypeProduct,
-                     Location)
+                     Location,
+                     Shop)
 from rest_framework import status
+import json
 from rest_framework.views import APIView
 from rest_framework.generics import (ListAPIView,
                                      RetrieveAPIView,
@@ -24,7 +26,9 @@ from .serializer import (ProductSerializer,
                          CartSerializer,
                          TypeProductSerializer,
                          OrderSerializer,
-                         LocationSerializer)
+                         LocationSerializer,
+                         ShopSerializer)
+from django.contrib.auth.models import User
 from django.urls import reverse
 from django.http import QueryDict
 from django.core.exceptions import ObjectDoesNotExist
@@ -171,6 +175,9 @@ class DeleteItemApi(DestroyAPIView):
 
 
 class LocationList(ListCreateAPIView):
+    """
+        Api for get all markers on map
+    """
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
 
@@ -180,6 +187,9 @@ class LocationList(ListCreateAPIView):
 
 
 class LocationDetail(RetrieveUpdateDestroyAPIView):
+    """
+        Api for detail marker on map
+    """
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
 
@@ -230,10 +240,39 @@ class OrderSuccessApi(CreateModelMixin, RetrieveAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            # check if type of purchase 'самовывоз' return message response -> look on the map with shop
-            # if type of purchase 'курьером' check person users which is available
-            # if is than send client geo position
-            return Response({'message': serializer.data}, status=status.HTTP_201_CREATED)
+            customer = User.objects.get(username=request.data.get('user'))
+            purchase_type = request.data.get('purchase_type')
+            if purchase_type == "Самовывоз":
+                shop = Shop.objects.first()
+                if shop._working():
+                    # fix initial fields some fields, and bellow
+                    order = Order.objects.create(
+                        user=customer
+                    )
+                    order.save()
+                    return Response({
+                        'longitude': shop.position.longitude,
+                        'latitude': shop.position.latitude,
+                    })
+                return Response({
+                    'message': "Простите но наш магазин уже закрыт, "
+                    "обратитесь позже мы работаем с 9:00 - 22:00 каждый день"
+                }, status=status.HTTP_200_OK)
+            else:
+                order = Order.objects.create(
+                    serializer.validated_data
+                )
+                driver = order.setup_driver(customer)
+                customer_pos, driver_pos = (Profile.objects.get(user=customer),
+                                            Profile.objects.get(user=driver))
+                order.save()
+                return Response({
+                    'message':
+                        [{'customer_pos': (customer_pos.location.longitude,
+                                          customer_pos.location.latitude)},
+                        {'driver_pos': (driver_pos.location.longitude,
+                                        driver_pos.location.latitude)}]
+                }, status=status.HTTP_200_OK)
         return Response({'message': serializer.data}, status=status.HTTP_400_BAD_REQUEST)
 
 

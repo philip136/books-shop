@@ -4,7 +4,6 @@ from django.conf import settings
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models as models_gis
-from django.contrib.gis.geos import Point
 import datetime
 
 
@@ -123,7 +122,7 @@ class Location(models.Model):
         verbose_name_plural = "Геолокации"
 
     def __str__(self):
-        return f'Aдрес: {self.address}'
+        return f'Aдрес: {self.title}'
 
     @property
     def longitude(self):
@@ -162,6 +161,29 @@ class Profile(models.Model):
         return f'Профиль пользователя: {self.user.username}'
 
 
+class Shop(models.Model):
+    name = models.CharField(max_length=50)
+    position = models.ForeignKey(Location, on_delete=models.CASCADE)
+    starts_working = models.TimeField(default=datetime.time(hour=9, minute=0, second=0))
+    finishes_working = models.TimeField(default=datetime.time(hour=22, minute=0, second=0))
+
+    class Meta:
+        verbose_name = "Магазин"
+        verbose_name_plural = "Магазины"
+
+    def __str__(self):
+        return f'Магазин {self.name}'
+
+    @staticmethod
+    def _working():
+        time_now, _ = datetime.datetime.now(), datetime.datetime.today()
+        time_close = datetime.time(hour=22, minute=0, second=0)
+        delta = time_now - datetime.datetime.combine(_, time_close)
+        if delta.days < 0:
+            return False
+        return True
+
+
 class Order(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     items = models.ForeignKey(Cart, on_delete=models.CASCADE)
@@ -180,18 +202,16 @@ class Order(models.Model):
     def __str__(self):
         return f"Заказ номер {self.id}"
 
-    def setup_driver(self, user):
+    @staticmethod
+    def setup_driver(user):
         couriers = Profile.objects.filter(is_staff=True,
                                           is_active=True,
                                           busy=False)
         client = Profile.objects.get(user=user)
-        if len(couriers) > 0:
-            courier = Profile.objects.get(user__profile=couriers.first())
-            courier.client = client
-            courier.save()
-            return courier
-        return 'Простите мы не можем доставить ваш товар сейчас так как'\
-               ' сейчас нет свободных курьеров!'
+        courier = Profile.objects.get(user__profile=couriers.first())
+        courier.client = client
+        courier.save()
+        return courier
     
 
     

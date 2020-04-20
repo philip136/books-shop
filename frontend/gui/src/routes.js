@@ -5,6 +5,7 @@ import ProductDetail from './containers/ProductDetail';
 import Login from './containers/Login';
 import RegistrationForm from './containers/Signup';
 import CartList from './containers/CartList';
+import OrderForm from './containers/Order';
 
 
 const BaseRouter = () => (
@@ -14,6 +15,7 @@ const BaseRouter = () => (
         <Route exact path='/login/' component={Login} />
         <Route exact path='/signup/' component={RegistrationForm} />
         <Route exact path='/my-cart/' component={CartList} />
+        <Route exact path='/my-order/' component={OrderForm} />
     </div>
 );
 
