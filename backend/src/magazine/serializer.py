@@ -70,10 +70,11 @@ class LocationSerializer(serializers.ModelSerializer):
             'title',
             'description',
             'address',
+            'point',
             'latitude',
             'longitude',
         ]
-        read_only_fields = fields
+        read_only_fields = ['id', 'title', 'description', 'address',]
 
 
 class TypeProductSerializer(serializers.ModelSerializer):
@@ -165,6 +166,22 @@ class OrderSerializer(serializers.ModelSerializer):
     first_name = serializers.CharField(max_length=30)
     last_name = serializers.CharField(max_length=30)
 
+    def _date(self, obj):
+        return datetime.date.today()
+
+    def _items(self, obj):
+        data = self.get_initial()
+        owner = User.objects.get(username=data.get('user'))
+        cart = Cart.objects.get(owner=owner)
+        return CartSerializer(cart).data
+
+    def _summary(self, obj):
+        data = self.get_initial()
+        owner = User.objects.get(username=data.get('user'))
+        cart = Cart.objects.get(owner=owner)
+        cart_total = cart.cart_total
+        return cart_total
+
     class Meta:
         model = Order
         fields = [
@@ -178,7 +195,6 @@ class OrderSerializer(serializers.ModelSerializer):
             'purchase_type',
             'status',
         ]
-        read_only_fields = ''
 
     def validate_phone(self, phone):
         result = re.match(r'^\+375(17|29|33|44)[0-9]{3}[0-9]{2}[0-9]{2}$', phone)
@@ -202,21 +218,6 @@ class OrderSerializer(serializers.ModelSerializer):
                                               "и ее длина не должна быть меньше 3")
         return result
 
-    def _date(self, obj):
-        return datetime.date.today()
-
-    def _items(self, obj):
-        data = self.get_initial()
-        owner = User.objects.get(username=data.get('user'))
-        cart = Cart.objects.get(owner=owner)
-        return CartSerializer(cart).data
-
-    def _summary(self, obj):
-        data = self.get_initial()
-        owner = User.objects.get(username=data.get('user'))
-        cart = Cart.objects.get(owner=owner)
-        cart_total = cart.cart_total
-        return cart_total
 
 
 

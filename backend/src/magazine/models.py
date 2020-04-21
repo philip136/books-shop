@@ -177,7 +177,7 @@ class Shop(models.Model):
     @staticmethod
     def _working():
         time_now, _ = datetime.datetime.now(), datetime.datetime.today()
-        time_close = datetime.time(hour=22, minute=0, second=0)
+        time_close = datetime.time(hour=4, minute=0, second=0)
         delta = time_now - datetime.datetime.combine(_, time_close)
         if delta.days < 0:
             return False
@@ -191,7 +191,7 @@ class Order(models.Model):
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     phone = models.CharField(max_length=13)
-    date = models.DateTimeField(default=datetime.date.today)
+    date = models.DateTimeField(default=datetime.datetime.today)
     purchase_type = models.CharField(max_length=30, choices=ORDER_TYPE_OF_PURCHASE, default="Самовывоз")
     status = models.CharField(max_length=30, choices=ORDER_STATUS_CHOICES)
 
@@ -204,14 +204,16 @@ class Order(models.Model):
 
     @staticmethod
     def setup_driver(user):
-        couriers = Profile.objects.filter(is_staff=True,
-                                          is_active=True,
+        couriers = Profile.objects.filter(user__is_staff=True,
+                                          user__is_active=True,
                                           busy=False)
-        client = Profile.objects.get(user=user)
-        courier = Profile.objects.get(user__profile=couriers.first())
-        courier.client = client
-        courier.save()
-        return courier
+        if len(couriers) > 0:
+            client = Profile.objects.get(user=user)
+            courier = Profile.objects.get(user__profile=couriers.first())
+            courier.client = client
+            courier.save()
+            return courier
+        return None
     
 
     

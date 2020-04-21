@@ -5,8 +5,12 @@ from .models import (Product,
                      Order,
                      TypeProduct,
                      Location,
-                     Shop)
+                     Shop,
+                     Profile)
 from rest_framework import status
+from django.contrib.gis.geos import (GEOSGeometry,
+                                     Point)
+import datetime
 import json
 from rest_framework.views import APIView
 from rest_framework.generics import (ListAPIView,
@@ -192,13 +196,33 @@ class LocationDetail(RetrieveUpdateDestroyAPIView):
     """
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
+    permission_classes = (IsAuthenticated,)
 
     def retrieve(self, request, *args, **kwargs):
         queryset = self.get_object()
         serializer = LocationSerializer(queryset, many=False)
         return Response(serializer.data)
 
-    
+    def update(self, request, *args, **kwargs):
+        """ Setup pos for users"""
+        # for example 53.893009 27.567444 -> Minsk
+        user = request.data.get('user')
+        point = request.data.get('point').split(' ')
+        serializer = LocationSerializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            location = Location.objects.create(
+                point=GEOSGeometry("POINT(%s %s)" % (point[0], point[1]))
+            )
+            profile = Profile.objects.get(user=user)
+            profile.location = location
+            return Response({
+                'current_position': profile.location
+            }, status=status.HTTP_201_CREATED)
+        return Response({
+            'message': 'Not valid serializer'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
 class UpdateCartItemApi(UpdateAPIView):
     """ 
     Api for update cart item , for example common count
@@ -238,41 +262,57 @@ class OrderSuccessApi(CreateModelMixin, RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
+        lat_customer, lon_customer = request.data.get('current_pos')
+
+        customer = User.objects.get(username=request.data.get('user'))
+        items = Cart.objects.filter(owner=customer).first()
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            customer = User.objects.get(username=request.data.get('user'))
-            purchase_type = request.data.get('purchase_type')
-            if purchase_type == "Самовывоз":
-                shop = Shop.objects.first()
-                if shop._working():
-                    # fix initial fields some fields, and bellow
-                    order = Order.objects.create(
-                        user=customer
-                    )
+            data = {
+                'user': customer,
+                'items': items,
+                'total_price': items.cart_total,
+                'first_name': request.data.get('first_name'),
+                'last_name': request.data.get('last_name'),
+                'phone': request.data.get('phone'),
+                'date': datetime.datetime.now(),
+                'status': request.data.get('status'),
+                'purchase_type': request.data.get('purchase_type'),
+            }
+            shop = Shop.objects.first()
+            if shop._working():
+                if request.data.get('purchase_type') == "Самовывоз":
+                    order = Order.objects.create(**data)
                     order.save()
+                    # Шуруй смотреть карту с магазином со следующим координатам
                     return Response({
                         'longitude': shop.position.longitude,
                         'latitude': shop.position.latitude,
-                    })
-                return Response({
-                    'message': "Простите но наш магазин уже закрыт, "
-                    "обратитесь позже мы работаем с 9:00 - 22:00 каждый день"
-                }, status=status.HTTP_200_OK)
-            else:
-                order = Order.objects.create(
-                    serializer.validated_data
-                )
-                driver = order.setup_driver(customer)
-                customer_pos, driver_pos = (Profile.objects.get(user=customer),
-                                            Profile.objects.get(user=driver))
-                order.save()
-                return Response({
-                    'message':
-                        [{'customer_pos': (customer_pos.location.longitude,
-                                          customer_pos.location.latitude)},
-                        {'driver_pos': (driver_pos.location.longitude,
-                                        driver_pos.location.latitude)}]
-                }, status=status.HTTP_200_OK)
+                    }, status=status.HTTP_201_CREATED)
+                else:
+                    order = Order.objects.create(**data)
+                    driver = order.setup_driver(customer)
+                    if driver is not None:
+                        customer = Profile.objects.get(user=customer)
+                        customer.courier = driver
+                        order.save()
+                        # customer geo -> from react take request
+                        return Response({
+                            'message':
+                                [{'customer_position': (customer.location.longitude,
+                                                        customer.location.latitude)},
+                                 {'driver_position': (driver.location.longitude,
+                                                      driver.location.latitude)}]
+                        }, status=status.HTTP_201_CREATED)
+                    return Response({
+                        'message': "Простите свободных курьеров сейчас нет, "
+                        "обратитесь позже"
+                    }, status=status.HTTP_200_OK)
+
+            return Response({
+                'message': "Простите но наш магазин уже закрыт, "
+                "обратитесь позже мы работаем с 9:00 - 22:00 каждый день"
+            }, status=status.HTTP_200_OK)
         return Response({'message': serializer.data}, status=status.HTTP_400_BAD_REQUEST)
 
 
