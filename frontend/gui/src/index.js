@@ -6,6 +6,7 @@ import {createStore, compose, applyMiddleware} from 'redux';
 import reducer from './store/reducers/auth';
 import thunk from 'redux-thunk';
 import { Provider } from 'react-redux';
+import 'leaflet/dist/leaflet.css';
 
 
 const composeEnhances = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
