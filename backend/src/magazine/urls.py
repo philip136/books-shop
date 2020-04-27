@@ -1,4 +1,5 @@
-from django.urls import path
+from django.urls import (path,
+                         re_path)
 from .views import (ProductsApi,
                     TypeProductsApi,
                     ProductDetailApi,
@@ -8,7 +9,8 @@ from .views import (ProductsApi,
                     UpdateCartItemApi,
                     OrderSuccessApi,
                     LocationList,
-                    LocationDetail)
+                    LocationDetail,
+                    )
 
 
 app_name = "magazine"

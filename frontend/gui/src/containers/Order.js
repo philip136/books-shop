@@ -1,6 +1,6 @@
 import React from "react";
 import {Form, Input, Select} from "antd";
-import * as actions from "../store/actions/auth";
+import * as actions from "../store/actions/location";
 import {connect} from "react-redux";
 import {withMyHook} from "./Login";
 
@@ -75,10 +75,18 @@ class OrderForm extends React.Component{
 
 const order = withMyHook(OrderForm)
 
-const mapDispathToProps = dispatch => {
+const mapStateToProps = (state) => {
     return {
-        logout: () => dispatch(actions.logout())
-    };
-};
+        coords: state.coords,
+        error: state.error,
+        loading: state.loading
+    }
+}
 
-export default connect(null, mapDispathToProps)(order);
+const mapDispatchToProps = dispatch => {
+    return {
+        geoPosition: (user) => dispatch(actions.fetchLocation(user))
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(order);

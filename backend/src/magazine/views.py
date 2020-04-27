@@ -204,7 +204,7 @@ class LocationDetail(RetrieveUpdateDestroyAPIView):
         return Response(serializer.data)
 
     def update(self, request, *args, **kwargs):
-        """ Setup pos for users"""
+        """ Setup pos for users calling in React map"""
         # for example 53.893009 27.567444 -> Minsk
         user = request.data.get('user')
         point = request.data.get('point').split(' ')
@@ -262,8 +262,6 @@ class OrderSuccessApi(CreateModelMixin, RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
-        lat_customer, lon_customer = request.data.get('current_pos')
-
         customer = User.objects.get(username=request.data.get('user'))
         items = Cart.objects.filter(owner=customer).first()
         serializer = self.serializer_class(data=request.data)

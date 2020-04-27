@@ -151,6 +151,7 @@ class Profile(models.Model):
         on_delete=models.DO_NOTHING,
         related_name='profile_as_client'
     )
+    status_staff = models.BooleanField(default=False)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, blank=True, null=True)
 
     class Meta:
