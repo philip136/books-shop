@@ -8,7 +8,8 @@ from .models import (Product,
                      Order,
                      Profile,
                      Location,
-                     Shop)
+                     Shop,
+                     RoomOrder)
 
 
 class LocationAdmin(admin.OSMGeoAdmin):
@@ -17,6 +18,7 @@ class LocationAdmin(admin.OSMGeoAdmin):
 
 
 admin.site.register(Location, LocationAdmin)
+admin.site.register(RoomOrder)
 admin.site.register(Shop)
 admin.site.register(Product)
 admin.site.register(TypeProduct)

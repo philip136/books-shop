@@ -17,7 +17,7 @@ const BaseRouter = () => (
         <Route exact path='/signup/' component={RegistrationForm} />
         <Route exact path='/my-cart/' component={CartList} />
         <Route exact path='/my-order/' component={OrderForm} />
-        <Route exact path='/map/' component={MapContainer} />
+        <Route exact path='/map/:roomID/' component={MapContainer} />
     </div>
 );
 

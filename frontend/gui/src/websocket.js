@@ -15,18 +15,17 @@ class WebsocketService {
         this.socketRef = null;
     }
 
-    connect(username) {
-        this.socketRef = new WebSocket(socket_url(username));
+    connect(roomID) {
+        this.socketRef = new WebSocket(socket_url(roomID));
         this.socketRef.onopen = () => {
             console.log("WebSocket open");
         };
-
         this.socketRef.onmessage = (e) => {
-            this.fetchCoordinates(e.data)
+            this.socketNewLocation(e.data);
         };
 
         this.socketRef.onerror = (error) => {
-            console.error(error);
+            console.log(error.message);
         };
 
         this.socketRef.onclose = () => {
@@ -35,19 +34,49 @@ class WebsocketService {
         };
     }
 
-    disconnect(){
+    disconnect() {
         this.socketRef.close();
     }
 
-    fetchCoordinates(username) {
-        this.sendCoordinates({
-            username: username
+    socketNewLocation(data) {
+        const parsedData = JSON.parse(data);
+        const command = parsedData.command;
+        if (Object.keys(this.callbacks).length === 0) {
+            return;
+        }
+        if (command === 'location') {
+            this.callbacks[command](parsedData.location);
+        }
+        if (command === 'new_location') {
+            this.callbacks[command](parsedData.location)
+        }
+    }
+
+    fetchLocation(username, roomID) {
+        this.sendLocation({
+            command: 'fetch_location',
+            username: username,
+            roomID: roomID
         });
     }
 
-    sendCoordinates(data) {
-        try{
-            this.socketRef.send(JSON.stringify({...data}));
+    newRoomLocation(location) {
+        this.sendLocation({
+            command: 'new_location',
+            who_shared: location.who_shared,
+            location: location.location,
+            roomID: location.roomID
+        })
+    }
+
+    addCallbacks(locationCallback, newLocationCallback) {
+        this.callbacks['location'] = locationCallback;
+        this.callbacks['new_location'] = newLocationCallback;
+    }
+
+    sendLocation(data) {
+        try {
+            this.socketRef.send(JSON.stringify({...data}))
         } catch (error) {
             console.log(error.message);
         }

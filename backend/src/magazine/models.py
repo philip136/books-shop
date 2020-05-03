@@ -109,10 +109,25 @@ ORDER_TYPE_OF_PURCHASE = [
 ]
 
 
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    busy = models.BooleanField(default=False)
+    payment = models.BooleanField(default=False)
+    status_staff = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Профиль"
+        verbose_name_plural = "Профили"
+
+    def __str__(self):
+        return f'Профиль пользователя: {self.user.username}'
+
+
 class Location(models.Model):
-    title = models.TextField(max_length=150)
-    description = models.TextField(blank=True, null=True)
+    title = models.TextField(max_length=150, blank=True)
     address = models.CharField(max_length=250, blank=True, null=True)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE,
+                                blank=True, null=True)
     point = models_gis.PointField(default='POINT(0 0)', srid=4326)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -133,35 +148,6 @@ class Location(models.Model):
         return self.point[1]
 
 
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    busy = models.BooleanField(default=False)
-    payment = models.BooleanField(default=False)
-    courier = models.ForeignKey(
-        'self',
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        related_name='profile_as_courier'
-    )
-    client = models.ForeignKey(
-        'self',
-        null=True,
-        blank=True,
-        on_delete=models.DO_NOTHING,
-        related_name='profile_as_client'
-    )
-    status_staff = models.BooleanField(default=False)
-    location = models.ForeignKey(Location, on_delete=models.CASCADE, blank=True, null=True)
-
-    class Meta:
-        verbose_name = "Профиль"
-        verbose_name_plural = "Профили"
-
-    def __str__(self):
-        return f'Профиль пользователя: {self.user.username}'
-
-
 class Shop(models.Model):
     name = models.CharField(max_length=50)
     position = models.ForeignKey(Location, on_delete=models.CASCADE)
@@ -178,11 +164,28 @@ class Shop(models.Model):
     @staticmethod
     def _working():
         time_now, _ = datetime.datetime.now(), datetime.datetime.today()
-        time_close = datetime.time(hour=4, minute=0, second=0)
+        time_close = datetime.time(hour=23, minute=0, second=0)
         delta = time_now - datetime.datetime.combine(_, time_close)
         if delta.days < 0:
             return False
         return True
+
+
+class RoomOrder(models.Model):
+    """ In room exist client and courier,
+    they can sharing location between themselves
+    """
+    participants = models.ManyToManyField(
+        Profile, related_name='room', blank=True
+    )
+    locations = models.ManyToManyField(Location, blank=True)
+
+    class Meta:
+        verbose_name = "Комната клиент-курьер"
+        verbose_name_plural = "Комнаты клиент-курьер"
+
+    def __str__(self):
+        return f"Комната {self.id}"
 
 
 class Order(models.Model):
@@ -205,16 +208,7 @@ class Order(models.Model):
 
     @staticmethod
     def setup_driver(user):
-        couriers = Profile.objects.filter(user__is_staff=True,
-                                          user__is_active=True,
-                                          busy=False)
-        if len(couriers) > 0:
-            client = Profile.objects.get(user=user)
-            courier = Profile.objects.get(user__profile=couriers.first())
-            courier.client = client
-            courier.save()
-            return courier
-        return None
+        pass
     
 
     
