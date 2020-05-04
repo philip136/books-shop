@@ -164,9 +164,8 @@ class Shop(models.Model):
     @staticmethod
     def _working():
         time_now, _ = datetime.datetime.now(), datetime.datetime.today()
-        time_close = datetime.time(hour=23, minute=0, second=0)
-        delta = time_now - datetime.datetime.combine(_, time_close)
-        if delta.days < 0:
+        time_close = datetime.datetime.combine(_,datetime.time(hour=22, minute=0, second=0))
+        if time_now > time_close:
             return False
         return True
 
@@ -197,7 +196,7 @@ class Order(models.Model):
     phone = models.CharField(max_length=13)
     date = models.DateTimeField(default=datetime.datetime.today)
     purchase_type = models.CharField(max_length=30, choices=ORDER_TYPE_OF_PURCHASE, default="Самовывоз")
-    status = models.CharField(max_length=30, choices=ORDER_STATUS_CHOICES)
+    status = models.CharField(max_length=30, choices=ORDER_STATUS_CHOICES, default="Принят к обработке")
 
     class Meta:
         verbose_name = "Заказ"
@@ -207,8 +206,12 @@ class Order(models.Model):
         return f"Заказ номер {self.id}"
 
     @staticmethod
-    def setup_driver(user):
-        pass
+    def search_free_driver():
+        profile_drivers = Profile.objects.filter(
+            busy=False,
+            status_staff=True,
+        ).first()
+        return profile_drivers
     
 
     

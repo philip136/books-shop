@@ -6,7 +6,8 @@ from .models import (Product,
                      TypeProduct,
                      Location,
                      Shop,
-                     Profile)
+                     Profile,
+                     RoomOrder)
 from rest_framework import status
 from django.contrib.gis.geos import (GEOSGeometry,
                                      Point)
@@ -29,9 +30,11 @@ from .serializer import (ProductSerializer,
                          CartItemSerializer,
                          CartSerializer,
                          TypeProductSerializer,
+                         ProfileSerializer,
                          OrderSerializer,
                          LocationSerializer,
-                         ShopSerializer)
+                         ShopSerializer,
+                         OrderRoomSerializer)
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.http import QueryDict
@@ -253,6 +256,18 @@ class UpdateCartItemApi(UpdateAPIView):
         return Response({'message': 'Введенные данные невалидны'})
 
 
+class ProfileApi(RetrieveAPIView):
+    queryset = Profile.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = (IsAuthenticated,)
+
+
+class OrderRoomApi(RetrieveAPIView):
+    queryset = RoomOrder.objects.all()
+    serializer_class = OrderRoomSerializer
+    permission_classes = (IsAuthenticated,)
+
+
 class OrderSuccessApi(CreateModelMixin, RetrieveAPIView):
     """
     Api for create order and moving to courier
@@ -274,7 +289,7 @@ class OrderSuccessApi(CreateModelMixin, RetrieveAPIView):
                 'last_name': request.data.get('last_name'),
                 'phone': request.data.get('phone'),
                 'date': datetime.datetime.now(),
-                'status': request.data.get('status'),
+
                 'purchase_type': request.data.get('purchase_type'),
             }
             shop = Shop.objects.first()
@@ -282,25 +297,29 @@ class OrderSuccessApi(CreateModelMixin, RetrieveAPIView):
                 if request.data.get('purchase_type') == "Самовывоз":
                     order = Order.objects.create(**data)
                     order.save()
-                    # Шуруй смотреть карту с магазином со следующим координатам
+                    roomOrder = RoomOrder()
+                    roomOrder.save()
+                    profile = Profile.objects.get(user=customer)
+                    roomOrder.participants.add(profile)
+                    roomOrder.locations.add(shop.position)
+
+                    serializer_room = OrderRoomSerializer(instance=roomOrder)
                     return Response({
-                        'longitude': shop.position.longitude,
-                        'latitude': shop.position.latitude,
+                        'message': serializer_room.data,
                     }, status=status.HTTP_201_CREATED)
                 else:
                     order = Order.objects.create(**data)
-                    driver = order.setup_driver(customer)
-                    if driver is not None:
-                        customer = Profile.objects.get(user=customer)
-                        customer.courier = driver
+                    profile_customer = Profile.objects.get(user=customer)
+                    profile_driver = order.search_free_driver()
+                    if profile_driver is not None:
+                        room_order = RoomOrder()
+                        room_order.save()
+                        room_order.participants.add(profile_customer)
+                        room_order.participants.add(profile_driver)
+                        serializer_room = OrderRoomSerializer(instance=room_order)
                         order.save()
-                        # customer geo -> from react take request
                         return Response({
-                            'message':
-                                [{'customer_position': (customer.location.longitude,
-                                                        customer.location.latitude)},
-                                 {'driver_position': (driver.location.longitude,
-                                                      driver.location.latitude)}]
+                            'message': serializer_room.data,
                         }, status=status.HTTP_201_CREATED)
                     return Response({
                         'message': "Простите свободных курьеров сейчас нет, "

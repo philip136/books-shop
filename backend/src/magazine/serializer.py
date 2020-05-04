@@ -11,7 +11,8 @@ from .models import (Product,
                      TypeProduct,
                      Profile,
                      Location,
-                     Shop)
+                     Shop,
+                     RoomOrder)
 from django.contrib.auth.models import User
 import datetime
 import re
@@ -68,13 +69,13 @@ class LocationSerializer(serializers.ModelSerializer):
         fields = [
             'id',
             'title',
-            'description',
+            'profile',
             'address',
             'point',
             'latitude',
             'longitude',
         ]
-        read_only_fields = ['id', 'title', 'description', 'address',]
+        read_only_fields = ['id', 'title', 'description', 'address', ]
 
 
 class TypeProductSerializer(serializers.ModelSerializer):
@@ -131,6 +132,19 @@ class UserSerializer(serializers.ModelSerializer):
         ]
 
 
+class ProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Profile
+        fields = [
+            'user',
+            'status_staff',
+            'payment',
+            'busy',
+        ]
+
+
 class CartSerializer(serializers.ModelSerializer):
     owner = UserSerializer()
 
@@ -143,6 +157,19 @@ class CartSerializer(serializers.ModelSerializer):
 
         ]
         depth = 2
+
+
+class OrderRoomSerializer(serializers.ModelSerializer):
+    participants = ProfileSerializer(many=True)
+    locations = LocationSerializer(many=True)
+
+    class Meta:
+        model = RoomOrder
+        fields = [
+            'id',
+            'participants',
+            'locations',
+        ]
 
 
 class ShopSerializer(serializers.ModelSerializer):
