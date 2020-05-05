@@ -19,7 +19,8 @@ from rest_framework.generics import (ListAPIView,
                                      DestroyAPIView,
                                      UpdateAPIView,
                                      ListCreateAPIView,
-                                     RetrieveUpdateDestroyAPIView)
+                                     RetrieveUpdateDestroyAPIView,
+                                     CreateAPIView)
 from rest_framework.response import Response
 from rest_framework.mixins import CreateModelMixin
 from rest_framework.permissions import (IsAdminUser,
@@ -268,9 +269,9 @@ class OrderRoomApi(RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
 
 
-class OrderSuccessApi(CreateModelMixin, RetrieveAPIView):
+class OrderSuccessApi(CreateAPIView):
     """
-    Api for create order and moving to courier
+    Api for create order and create OrderRoom
     """
     queryset = Order.objects.all()
     serializer_class = OrderSerializer

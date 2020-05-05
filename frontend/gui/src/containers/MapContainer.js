@@ -4,17 +4,17 @@ import '../style.css';
 import { iconPerson } from "../components/CustomMarker";
 import WebSocketInstance from "../websocket";
 import {connect} from 'react-redux';
-import * as actions from '../store/actions/location';
+import * as actions from '../store/actions/orderRoom';
 import {Button} from "bootstrap-4-react/lib/components";
 import Control from 'react-leaflet-control';
 
 
 class MapContainer extends React.Component {
+    // extends state add locations driver and customer
+    // status staff if status_staff -> true, render button(order finished)
+
     state = {
-        location: {
-          lat: 53.893009,
-          lng: 27.567444,
-        },
+        location: null,
         zoom: 11,
     }
 
@@ -25,7 +25,13 @@ class MapContainer extends React.Component {
                 this.props.match.params.roomID
             );
         });
+        this.props.roomOrder(this.props.match.params.roomID);
         WebSocketInstance.connect(this.props.match.params.roomID);
+    }
+
+    initialiseRoomParticipants() {
+        let participants = this.props.roomInfo['participants'];
+        console.log(participants);
     }
 
     constructor(props) {
@@ -75,6 +81,7 @@ class MapContainer extends React.Component {
         };
         WebSocketInstance.newRoomLocation(locationObject);
         this.setState({location: locationObject.location});
+        window.location.reload(false);
     }
 
     componentDidMount() {
@@ -94,8 +101,9 @@ class MapContainer extends React.Component {
         }
     }
 
-
     render(){
+        console.log(this.props);
+        const {error, loading, payment} = this.props;
         const position = this.state.location;
         const current_user = localStorage.getItem('username');
 
@@ -111,9 +119,9 @@ class MapContainer extends React.Component {
                     url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
                 />
                  <Marker position={position} icon={ iconPerson }>
-                        <Popup>
-                            Местоположение {current_user}
-                        </ Popup>
+                    <Popup>
+                        Местоположение {current_user}
+                    </ Popup>
                  </ Marker>
                 <Control position='topleft'>
                     <Button onClick={ () => this.sendLocation()}>
@@ -125,4 +133,19 @@ class MapContainer extends React.Component {
     }
 }
 
-export default MapContainer;
+const mapStateToProps = (state) => {
+    return {
+        roomInfo: state.orderRoom.roomInfo,
+        error: state.orderRoom.error,
+        loading: state.orderRoom.loading,
+        payment: state.orderRoom.payment
+    }
+}
+
+const mapDispatchToProps = (dispatch) => {
+    return {
+        roomOrder: (roomId) => dispatch(actions.getRoom(roomId))
+    }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(MapContainer);

@@ -1,8 +1,8 @@
 import React from "react";
-import {Form, Input, Select} from "antd";
-import * as actions from "../store/actions/location";
-import {connect} from "react-redux";
+import {Button, Form, Input, Select} from "antd";
 import {withMyHook} from "./Login";
+import {orderUrl} from "../constants";
+import {authAxios} from '../utils';
 
 
 class OrderForm extends React.Component{
@@ -11,11 +11,26 @@ class OrderForm extends React.Component{
         error: null,
     }
 
+    handleCheckout = (data) => {
+        // add user in data
+        authAxios
+            .post(orderUrl, {...data})
+            .then(res => {
+                window.location.reload();
+            })
+            .catch(err => {
+                this.setState({
+                    error: err,
+                    loading: false
+                })
+            })
+    };
+
     render(){
         const form = this.props.form;
         return (
             <div>
-                <Form form={form}>
+                <Form form={form} onFinish={this.handleCheckout}>
                     <Form.Item
                         label="Ваше имя"
                         name="first_name"
@@ -67,6 +82,9 @@ class OrderForm extends React.Component{
                             <Select.Option value="Доставка курьером">Доставка курьером</Select.Option>
                         </Select>
                     </Form.Item>
+                    <Button type="primary" htmlType="submit" style={{marginRight: '10px'}}>
+                  Продолжить
+                </Button>
                 </Form>
             </div>
         );
@@ -75,18 +93,4 @@ class OrderForm extends React.Component{
 
 const order = withMyHook(OrderForm)
 
-const mapStateToProps = (state) => {
-    return {
-        coords: state.coords,
-        error: state.error,
-        loading: state.loading
-    }
-}
-
-const mapDispatchToProps = dispatch => {
-    return {
-        geoPosition: (user) => dispatch(actions.fetchLocation(user))
-    }
-}
-
-export default connect(mapStateToProps, mapDispatchToProps)(order);
+export default order;
