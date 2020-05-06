@@ -232,14 +232,14 @@ class OrderSerializer(serializers.ModelSerializer):
         return result
 
     def validate_first_name(self, first_name):
-        result = re.match(r'^[A-Za-z]{2,30}$', first_name)
+        result = re.match(r'^[А-Яа-я]{2,30}$', first_name)
         if result is None:
             raise serializers.ValidationError("Имя должно содержать только буквы, "
                                               "и его длина не должна быть меньше 2")
         return result
 
     def validate_last_name(self, last_name):
-        result = re.match(r'^[A-Za-z]{3,30}$', last_name)
+        result = re.match(r'^[А-Яа-я]{3,30}$', last_name)
         if result is None:
             raise serializers.ValidationError("Фамилия должна содержать только буквы, "
                                               "и ее длина не должна быть меньше 3")

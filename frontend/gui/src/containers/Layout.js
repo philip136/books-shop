@@ -7,6 +7,18 @@ import * as actions from '../store/actions/auth';
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
 
+
+const roomIdIsExist = (props) => {
+  try {
+    let roomId = localStorage.getItem('roomId');
+    return props.history.push(`/map/${roomId}/`);
+  } catch (error) {
+    console.log("У вас нет оформленных заказов");
+    return props.history.push('/');
+  }
+}
+
+
 const CustomLayout = (props) => {
     return (
         <Layout>
@@ -35,8 +47,6 @@ const CustomLayout = (props) => {
               <Menu.Item key="1">
                 <Link to="/">Главная</Link>
               </Menu.Item>
-              <Menu.Item key="2">Новинки</Menu.Item>
-              <Menu.Item key="3">Популярное</Menu.Item>
             </Menu>
           </Header>
           <Layout>
@@ -81,7 +91,9 @@ const CustomLayout = (props) => {
                     </span>
                   }
                 >
-                  <Menu.Item key="9">Курьеры</Menu.Item>
+                  <Menu.Item key="9" onClick={() => roomIdIsExist(props)}>
+                    Курьеры
+                  </Menu.Item>
                 </SubMenu>
               </Menu>
             </Sider>

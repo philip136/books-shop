@@ -12,11 +12,14 @@ class OrderForm extends React.Component{
     }
 
     handleCheckout = (data) => {
-        // add user in data
+        let extendData = {...data};
+        extendData.user = localStorage.getItem('username');
+
         authAxios
-            .post(orderUrl, {...data})
+            .post(orderUrl, extendData)
             .then(res => {
-                window.location.reload();
+                const roomId = res.data.message['id'];
+                localStorage.setItem('roomId', roomId);
             })
             .catch(err => {
                 this.setState({
@@ -70,6 +73,7 @@ class OrderForm extends React.Component{
                     </Form.Item>
                     <Form.Item
                         label="Тип покупки"
+                        name="purchase_type"
                         rules = {[
                             {
                                required: true,
