@@ -10,11 +10,12 @@ import Control from 'react-leaflet-control';
 
 
 class MapContainer extends React.Component {
-    // extends state add locations driver and customer
-    // status staff if status_staff -> true, render button(order finished)
-
     state = {
         location: null,
+        location_another_place: {
+            lat: 50.121231,
+            lng: 27.15123
+        },
         zoom: 11,
     }
 
@@ -25,18 +26,17 @@ class MapContainer extends React.Component {
                 this.props.match.params.roomID
             );
         });
-        this.props.roomOrder(this.props.match.params.roomID);
         WebSocketInstance.connect(this.props.match.params.roomID);
-    }
-
-    initialiseRoomParticipants() {
-        let participants = this.props.roomInfo['participants'];
-        console.log(participants);
     }
 
     constructor(props) {
         super(props);
         this.initialiseRoom();
+        this.props.roomOrder(this.props.match.params.roomID);
+    }
+
+    saveMap = map => {
+        this.map = map;
     }
 
     waitForSocketConnection(callback) {
@@ -50,7 +50,7 @@ class MapContainer extends React.Component {
                 console.log("Wait for connection ...");
                 component.waitForSocketConnection(callback);
             }
-        }, 1000)
+        }, 100)
     }
 
     initialCurrentLocation = () => {
@@ -88,6 +88,7 @@ class MapContainer extends React.Component {
         this.initialCurrentLocation();
     }
 
+
     componentWillReceiveProps(newProps) {
         if (this.props.match.params.roomID !== newProps.match.params.roomID) {
             WebSocketInstance.disconnect();
@@ -99,10 +100,33 @@ class MapContainer extends React.Component {
             });
             WebSocketInstance.connect(newProps.match.params.roomID);
         }
+
+        if (newProps.roomInfo !== null){
+            const another_location = this.renderRoomLocations(newProps.roomInfo['locations']);
+            console.log(another_location);
+            this.setState({
+                location_another_place: another_location[0]
+            });
+        }
+
+    }
+
+    renderRoomLocations = (locations) => {
+        const currentUser = localStorage.getItem('username');
+        if (locations !== null){
+            return locations.map((location, i, arr) => {
+                if (location['title'].search(currentUser) === -1){
+                    const location_another_place = {
+                        lat: location['latitude'],
+                        lng: location['longitude']
+                    };
+                    return location_another_place;
+                }
+            });
+        }
     }
 
     render(){
-        console.log(this.props);
         const {error, loading, payment} = this.props;
         const position = this.state.location;
         const current_user = localStorage.getItem('username');
@@ -123,6 +147,12 @@ class MapContainer extends React.Component {
                         Местоположение {current_user}
                     </ Popup>
                  </ Marker>
+                <Marker position={this.state.location_another_place} icon={ iconPerson }>
+                    <Popup>
+                        Местоположение {current_user}
+                    </ Popup>
+                 </ Marker>
+
                 <Control position='topleft'>
                     <Button onClick={ () => this.sendLocation()}>
                         Обновить

@@ -21,7 +21,9 @@ class RegistrationForm extends React.Component {
                             values.username,
                             values.email,
                             values.password,
-                            values.confirm
+                            values.confirm,
+                            values.first_name,
+                            values.last_name
                           );
     }
 
@@ -60,6 +62,27 @@ class RegistrationForm extends React.Component {
                             >
                                 <Input />
                         </Form.Item>
+                       <Form.Item label="Ваше имя" name="first_name"
+                            rules = {[
+                                        {
+                                            required: true,
+                                            message: 'Пожалуйста введите ваше имя'
+                                        },
+                            ]}
+                        >
+                            <Input />
+                       </Form.Item>
+
+                       <Form.Item label="Ваша фамилия" name="last_name"
+                            rules = {[
+                                        {
+                                            required: true,
+                                            message: 'Пожалуйста введите вашу фамилию'
+                                        },
+                            ]}
+                        >
+                            <Input />
+                       </Form.Item>
                         
                         <Form.Item label='Адрес электронной почты' name='email'
                         rules ={[ 
@@ -144,8 +167,8 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = dispatch => {
     return {
-        onAuth: (username, email, password1, password2) => dispatch(
-            actions.authSignup(username, email, password1, password2)
+        onAuth: (username, email, password1, password2, first_name, last_name) => dispatch(
+            actions.authSignup(username, email, password1, password2, first_name, last_name)
             ) 
     }
 }

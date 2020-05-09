@@ -5,6 +5,10 @@ import {orderUrl} from "../constants";
 import {authAxios} from '../utils';
 
 
+const styleItems = {
+    marginRight: '15px'
+}
+
 class OrderForm extends React.Component{
     state = {
         loading: false,
@@ -33,7 +37,7 @@ class OrderForm extends React.Component{
         const form = this.props.form;
         return (
             <div>
-                <Form form={form} onFinish={this.handleCheckout}>
+                <Form form={form} onFinish={this.handleCheckout} style={{display: 'table'}}>
                     <Form.Item
                         label="Ваше имя"
                         name="first_name"
@@ -44,7 +48,7 @@ class OrderForm extends React.Component{
                             },
                         ]}
                     >
-                        <Input placeholder="Введите ваше имя" />
+                        <Input placeholder="Введите ваше имя"  />
                     </Form.Item>
                     <Form.Item
                         label="Ваша фамилия"
