@@ -11,7 +11,7 @@ from .views import (ProductsApi,
                     LocationList,
                     LocationDetail,
                     OrderRoomApi,
-                    ProfileApi
+                    ProfileApi,
                     )
 
 

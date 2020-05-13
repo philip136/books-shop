@@ -265,10 +265,25 @@ class ProfileApi(RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
 
 
-class OrderRoomApi(RetrieveAPIView):
+class OrderRoomApi(RetrieveAPIView, DestroyAPIView):
     queryset = RoomOrder.objects.all()
     serializer_class = OrderRoomSerializer
     permission_classes = (IsAuthenticated,)
+
+    def destroy(self, request, *args, **kwargs):
+        pk = kwargs['pk']
+        room = RoomOrder.objects.get(pk=pk)
+        client, courier = room.participants.all()[0], room.participants.all()[1]
+        if request.user.username == client.user.username:
+            order = Order.objects.get(user__username=courier.user.username)
+            order.check_status = "Оплачен"
+        else:
+            order = Order.objects.get(user__username=client.user.username)
+            order.check_status = "Оплачен"
+        room.delete()
+        return Response({'message': 'Клиент оплатил товар'},
+                        status=status.HTTP_204_NO_CONTENT
+                        )
 
 
 class OrderSuccessApi(CreateAPIView):

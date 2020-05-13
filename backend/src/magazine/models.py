@@ -230,6 +230,16 @@ class Order(models.Model):
             status_staff=True,
         ).first()
         return profile_drivers
+
+    @property
+    def check_status(self):
+        return self.status
+
+    @check_status.setter
+    def check_status(self, new_status):
+        self.status = new_status
+        if self.status == "Оплачен":
+            self.delete()
     
 
     

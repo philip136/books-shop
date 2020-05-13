@@ -7,19 +7,12 @@ import * as actions from '../store/actions/orderRoom';
 import {Button} from "bootstrap-4-react/lib/components";
 import Control from 'react-leaflet-control';
 import {Link} from 'react-router-dom';
+import {orderRoomUrl} from '../constants';
+import { authAxios } from '../utils';
 
 
 
 class MapContainer extends React.Component {
-    state = {
-        location: null,
-        location_another_place: {
-            lat: 50.121231,
-            lng: 27.15123
-        },
-        zoom: 11,
-    }
-
     initialiseRoom() {
         this.waitForSocketConnection(() => {
             WebSocketInstance.fetchLocation(
@@ -33,7 +26,16 @@ class MapContainer extends React.Component {
     constructor(props) {
         super(props);
         this.initialiseRoom();
-        this.props.roomOrder(this.props.match.params.roomID);
+        this.state =  {
+            location: null,
+            location_another_place: {
+                lat: 50.121231,
+                lng: 27.15123
+            },
+            zoom: 11,
+            status_user: false,
+            client: null,
+        }
     }
 
     waitForSocketConnection(callback) {
@@ -83,8 +85,27 @@ class MapContainer extends React.Component {
 
     componentDidMount() {
         this.initialCurrentLocation();
+        this.props.roomOrder(this.props.match.params.roomID);
     }
 
+    componentDidUpdate(prevProps, prevState) {
+        if (prevProps.roomInfo !== this.props.roomInfo){
+            this.props.roomInfo['participants'].map((participant, i) => {
+                if (participant['user']['username'] === localStorage.getItem('username')
+                ){
+                    if (participant['status_staff'] === true){
+                        this.setState({
+                            status_user: true
+                        });
+                    }else{
+                        this.setState({
+                            client: participant['user']['username']
+                        })
+                    }
+                }
+            })
+        }
+    }
 
     componentWillReceiveProps(newProps) {
         if (this.props.match.params.roomID !== newProps.match.params.roomID) {
@@ -102,7 +123,7 @@ class MapContainer extends React.Component {
             const another_location = this.renderRoomLocations(newProps.roomInfo['locations']);
             if (typeof(another_location[0]) === "undefined"){
                 this.setState({
-                    location_another_place: another_location[1]
+                    location_another_place: another_location[1],
                 })
             } else {
                 this.setState({
@@ -111,7 +132,19 @@ class MapContainer extends React.Component {
             }
 
         }
+    }
 
+    handlePayment = () => {
+        const {client} = this.state
+        authAxios
+            .delete(orderRoomUrl(this.props.match.params.roomID),{client})
+                .then(res => {
+                    console.log(res.data);
+                    this.props.history.push('/');
+                })
+                .catch(err => {
+                    console.log(err.message);
+                });
     }
 
     renderRoomLocations = (locations) => {
@@ -164,8 +197,15 @@ class MapContainer extends React.Component {
                 <Button className='map-button'>
                     <Link to="/">Вернуться</Link>
                 </Button>
-
                  </Control>
+                 {this.state.status_user
+                    &&
+                    <Control position='topleft'>
+                        <Button className='map-button' onClick={() => this.handlePayment()}>
+                            Оплачено
+                        </Button>
+                    </Control>
+                 }
             </ LeafletMap>
         );
     }
