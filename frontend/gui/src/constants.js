@@ -5,6 +5,7 @@ const apiUrl = "/api/";
 export const endpoint = `${localhost}${apiUrl}`;
 
 export const productListUrl = `${endpoint}products/`;
+export const productTypeUrl = slug => `${endpoint}products/type/${slug}/`;
 export const productDetailUrl = id => `${endpoint}products/${id}/`;
 export const addToCartUrl = id => `${endpoint}cart/${id}/`;
 export const myCartUrl = `${endpoint}cart/`;

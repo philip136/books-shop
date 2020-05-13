@@ -79,9 +79,24 @@ class LocationSerializer(serializers.ModelSerializer):
 
 
 class TypeProductSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
-        model = TypeProduct
-        fields = '__all__'
+        model = Product
+        fields = [
+            'id',
+            'name',
+            'price',
+            'delivery_time',
+            'image',
+            'count',
+            'type',
+        ]
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        image_url = obj.image.url
+        return request.build_absolute_uri(image_url)
 
 
 class ProductSerializer(serializers.ModelSerializer):

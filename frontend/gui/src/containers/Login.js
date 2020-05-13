@@ -87,7 +87,7 @@ class NormalLoginForm extends React.Component{
                 
               </Form.Item>
         
-              <Form.Item {...tailLayout} name="remember" valuePropName="checked">
+              <Form.Item {...tailLayout}  name="remember" valuePropName="checked">
                 <Checkbox>Запомнить меня</Checkbox>
               </Form.Item>
         
@@ -95,9 +95,9 @@ class NormalLoginForm extends React.Component{
                 <Button type="primary" htmlType="submit" style={{marginRight: '10px'}}>
                   Войти
                 </Button>
-                Или
+
                 <NavLink 
-                  style={{marginRight: '10px'}} 
+                  {...tailLayout}
                   to='/signup/'> Регистрация
               </NavLink>
               </Form.Item>

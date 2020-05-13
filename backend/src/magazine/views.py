@@ -48,12 +48,14 @@ class TypeProductsApi(RetrieveAPIView):
     Api for any type products
     """
     lookup_field = 'type'
-    serializer_class = ProductSerializer
+    serializer_class = TypeProductSerializer
     permission_classes = (AllowAny,)
 
     def get(self, request, *args, **kwargs):
         products = [product for product in self.get_queryset()]
-        return Response({'Products': ProductSerializer(products, many=True).data})
+        return Response(self.serializer_class(products,
+                                              many=True,
+                                              context={'request': request}).data)
 
     def get_queryset(self):
         type_name = self.kwargs.get('type')

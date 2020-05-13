@@ -2,6 +2,7 @@ import React,{Component} from 'react';
 import Product from '../components/Product';
 import axios from 'axios';
 import { List } from 'antd';
+import {productListUrl} from "../constants";
 
 
 class ProductList extends Component{
@@ -10,7 +11,7 @@ class ProductList extends Component{
     };
     
     componentDidMount(){
-        axios.get('http://127.0.0.1:8000/api/products/')
+        axios.get(productListUrl)
             .then(res => {
                 this.setState({
                     products: res.data
@@ -21,7 +22,15 @@ class ProductList extends Component{
     render(){
         return(
             <List
-                grid={{ gutter: 16, column: 3 }}
+                grid={{
+                      gutter: 16,
+                      xs: 1,
+                      sm: 2,
+                      md: 4,
+                      lg: 4,
+                      xl: 4,
+                      xxl: 3,
+                }}
                 dataSource={this.state.products}
                 renderItem={item => (
                 <List.Item>

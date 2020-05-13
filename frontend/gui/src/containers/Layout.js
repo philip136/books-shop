@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layout, Menu, Breadcrumb } from 'antd';
-import { UserOutlined, LaptopOutlined, NotificationOutlined } from '@ant-design/icons';
+import {CarOutlined, UserOutlined,ShoppingCartOutlined,} from '@ant-design/icons';
 import { Link, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import * as actions from '../store/actions/auth';
@@ -53,7 +53,6 @@ const CustomLayout = (props) => {
             <Sider width={200} className="site-layout-background">
               <Menu
                 mode="inline"
-                defaultSelectedKeys={['1']}
                 defaultOpenKeys={['sub1']}
                 style={{ height: '100%', borderRight: 0 }}
               >
@@ -67,15 +66,24 @@ const CustomLayout = (props) => {
                   }
                 >
                   
-                  <Menu.Item key="1">Книги</Menu.Item>
-                  <Menu.Item key="2">Блокноты</Menu.Item>
-                  <Menu.Item key="3">Календари</Menu.Item>
+                  <Menu.Item key="1"
+                    onClick={() => props.history.push('/products/type/books/')}>
+                    Книги
+                  </Menu.Item>
+                  <Menu.Item key="2"
+                    onClick={() => props.history.push('/products/type/notepads/')}>
+                    Блокноты
+                  </Menu.Item>
+                  <Menu.Item key="3"
+                  onClick={() => props.history.push('/products/type/calendars/')}>
+                  Календари
+                  </Menu.Item>
                 </SubMenu>
                 <SubMenu
                   key="sub2"
                   title={
                     <span>
-                      <LaptopOutlined />
+                      <ShoppingCartOutlined />
                         Ваша корзина
                     </span>
                   }
@@ -86,7 +94,7 @@ const CustomLayout = (props) => {
                   key="sub3"
                   title={
                     <span>
-                      <NotificationOutlined />
+                      <CarOutlined />
                       Доставка
                     </span>
                   }

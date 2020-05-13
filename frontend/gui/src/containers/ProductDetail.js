@@ -7,7 +7,8 @@ import { Card,
         Form,
         Input,
         message,
-        Spin
+        Spin,
+        InputNumber,
 } from 'antd';
 import { antIcon } from './Login';
 import { authAxios } from '../utils';
@@ -66,12 +67,11 @@ class ProductDetail extends React.Component{
             });
     };
 
-    handleChange = (e) => {
-        let val = e.target.value * 1;
+    handleChange = (value) => {
         const {formData} = this.state;
         const updatedFormData = {
             ...formData,
-            ['count']: val
+            ['count']: value
         };
         this.setState({formData: updatedFormData});
     };
@@ -88,30 +88,33 @@ class ProductDetail extends React.Component{
                 <Spin indicator={antIcon} />
 
                 :
-                <Row gutter={16}>
-                    <Col span={8}>
-                        <img src={this.state.data.image} width="300w"></img>
+                <Row gutter={[48]}>
+                    <Col span={10}>
+                        <img className='product-img' src={this.state.data.image}></img>
                     </Col>
-                    <Col span={8} >
-                        <Card title={this.state.data.name} bordered={false}>
-                        <p>Цена: {this.state.data.price } BYN </p>
-                        <p>Количество: {this.state.data.count} </p>
-                        </Card>
+                    <Col span={4}></Col>
+                    <Col span={8}>
+                     <div className="product-info">
+                        <h3>{this.state.data.name}</h3>
+                        <p className="price">Цена: {this.state.data.price } BYN </p>
+                        <p className="count">Количество: {this.state.data.count} </p>
+
                         <Form onFinish={() => this.handleAddToCart(item)}>
                             <Form.Item
-                                label="Количество"
+
                                 rules={[
                                     {
                                         required: true,
                                         message: "Введите количество продуктов которые вы хотите купить"
                                     },
                                 ]}>
-                                <Input onChange={this.handleChange} />
+                                <InputNumber min={1} max={this.state.data.count} onChange={this.handleChange} />
                             </Form.Item>
                             <Button type='primary' style={{marginTop: '30px'}} htmlType="submit">
                                 Купить
                             </Button>
                         </Form>
+                      </div>
                   </Col>
                 </Row>
                 }

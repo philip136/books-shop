@@ -1,12 +1,13 @@
 import React from 'react';
 import {Map as LeafletMap, TileLayer, Marker, Popup} from 'react-leaflet';
-import '../style.css';
 import { iconPerson } from "../components/CustomMarker";
 import WebSocketInstance from "../websocket";
 import {connect} from 'react-redux';
 import * as actions from '../store/actions/orderRoom';
 import {Button} from "bootstrap-4-react/lib/components";
 import Control from 'react-leaflet-control';
+import {Link} from 'react-router-dom';
+
 
 
 class MapContainer extends React.Component {
@@ -33,10 +34,6 @@ class MapContainer extends React.Component {
         super(props);
         this.initialiseRoom();
         this.props.roomOrder(this.props.match.params.roomID);
-    }
-
-    saveMap = map => {
-        this.map = map;
     }
 
     waitForSocketConnection(callback) {
@@ -103,10 +100,16 @@ class MapContainer extends React.Component {
 
         if (newProps.roomInfo !== null){
             const another_location = this.renderRoomLocations(newProps.roomInfo['locations']);
-            console.log(another_location);
-            this.setState({
-                location_another_place: another_location[0]
-            });
+            if (typeof(another_location[0]) === "undefined"){
+                this.setState({
+                    location_another_place: another_location[1]
+                })
+            } else {
+                this.setState({
+                    location_another_place: another_location[0]
+                });
+            }
+
         }
 
     }
@@ -138,9 +141,9 @@ class MapContainer extends React.Component {
                     maxZoom={16}
                     easeLinearity={0.35}
                 >
-                <TileLayer
-                    attribution="&amp;copy <a href=&quot;http://osm.org/copyright&quot;><OpenStreetMap</a> contributors"
-                    url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
+                 <TileLayer
+                  attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+                  url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"
                 />
                  <Marker position={position} icon={ iconPerson }>
                     <Popup>
@@ -152,12 +155,17 @@ class MapContainer extends React.Component {
                         Местоположение {current_user}
                     </ Popup>
                  </ Marker>
-
                 <Control position='topleft'>
-                    <Button onClick={ () => this.sendLocation()}>
+                    <Button className='map-button' onClick={ () => this.sendLocation()}>
                         Обновить
                     </ Button>
                 </ Control>
+                 <Control position='topleft'>
+                <Button className='map-button'>
+                    <Link to="/">Вернуться</Link>
+                </Button>
+
+                 </Control>
             </ LeafletMap>
         );
     }
