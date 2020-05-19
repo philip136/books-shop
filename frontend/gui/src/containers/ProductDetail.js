@@ -16,6 +16,7 @@ import { productDetailUrl, addToCartUrl } from '../constants';
 import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import { fetchCart } from '../store/actions/cart';
+import { Redirect } from "react-router-dom";
 
 
 class ProductDetail extends React.Component{
@@ -54,9 +55,8 @@ class ProductDetail extends React.Component{
         authAxios
             .post(addToCartUrl(id), { product_name, count })
             .then(res => {
-                this.props.refreshCart();
                 this.setState({loading: false});
-                if (res.status == 200){
+                if (res.status === 200){
                     message.warning(res.data['message']);
                 }
                 else {message.success(res.data['message']);}
@@ -75,9 +75,21 @@ class ProductDetail extends React.Component{
         };
         this.setState({formData: updatedFormData});
     };
-    
+
+    componentDidUpdate(prevProps, prevState){
+        if (prevState.data !== this.state.data){
+            this.setState({
+                data: this.state.data
+            });
+        }
+    }
+
 
     render(){
+         if (this.props.token === null){
+            return <Redirect to="/login/" />;
+         }
+
         const {loading, error, data} = this.state
         const item = data;
 
@@ -101,7 +113,6 @@ class ProductDetail extends React.Component{
 
                         <Form onFinish={() => this.handleAddToCart(item)}>
                             <Form.Item
-
                                 rules={[
                                     {
                                         required: true,
@@ -124,12 +135,12 @@ class ProductDetail extends React.Component{
 
 }
 
-const mapDispathToProps = dispatch => {
-    return {
-        refreshCart: () => dispatch(fetchCart())
-    };
-};
 
-export default withRouter(
-    connect(null, mapDispathToProps)(ProductDetail)
-);
+const mapStateToProps = (state) => {
+    return {
+        token: state.auth.token
+    }
+}
+
+
+export default connect(mapStateToProps)(ProductDetail);

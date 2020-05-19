@@ -9,6 +9,7 @@ import Control from 'react-leaflet-control';
 import {Link} from 'react-router-dom';
 import {orderRoomUrl} from '../constants';
 import { authAxios } from '../utils';
+import { Redirect } from "react-router-dom";
 
 
 
@@ -35,6 +36,7 @@ class MapContainer extends React.Component {
             zoom: 11,
             status_user: false,
             client: null,
+            current_user: localStorage.getItem('username'),
         }
     }
 
@@ -148,10 +150,10 @@ class MapContainer extends React.Component {
     }
 
     renderRoomLocations = (locations) => {
-        const currentUser = localStorage.getItem('username');
+        const {current_user} = this.state;
         if (locations !== null){
             return locations.map((location, i, arr) => {
-                if (location['title'].search(currentUser) === -1){
+                if (location['title'].search(current_user) === -1){
                     const location_another_place = {
                         lat: location['latitude'],
                         lng: location['longitude']
@@ -163,9 +165,12 @@ class MapContainer extends React.Component {
     }
 
     render(){
+        if (this.props.token === null){
+            return <Redirect to="/login/" />;
+        }
         const {error, loading, payment} = this.props;
         const position = this.state.location;
-        const current_user = localStorage.getItem('username');
+        const {current_user} = this.state;
 
         return (
                 <LeafletMap
@@ -216,7 +221,8 @@ const mapStateToProps = (state) => {
         roomInfo: state.orderRoom.roomInfo,
         error: state.orderRoom.error,
         loading: state.orderRoom.loading,
-        payment: state.orderRoom.payment
+        payment: state.orderRoom.payment,
+        token: state.auth.token,
     }
 }
 

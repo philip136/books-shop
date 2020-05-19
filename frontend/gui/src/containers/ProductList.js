@@ -1,7 +1,7 @@
 import React,{Component} from 'react';
 import Product from '../components/Product';
 import axios from 'axios';
-import { List } from 'antd';
+import { List, Card} from 'antd';
 import {productListUrl} from "../constants";
 
 
@@ -21,6 +21,7 @@ class ProductList extends Component{
 
     render(){
         return(
+
             <List
                 grid={{
                       gutter: 16,
@@ -33,9 +34,11 @@ class ProductList extends Component{
                 }}
                 dataSource={this.state.products}
                 renderItem={item => (
-                <List.Item>
-                    <Product data={item} />
-                </List.Item>
+                    <List.Item>
+                        <Card title={item.name}>
+                            <Product data={item} />
+                        </Card>
+                    </List.Item>
                 )}
             />
         );   
@@ -44,3 +47,6 @@ class ProductList extends Component{
 }
 
 export default ProductList;
+
+
+

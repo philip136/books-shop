@@ -286,6 +286,19 @@ class OrderRoomApi(RetrieveAPIView, DestroyAPIView):
                         )
 
 
+class OrderRoomConnectApi(RetrieveAPIView):
+    """
+    Api for get room order for courier
+    """
+
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username')
+        order_room = RoomOrder.objects.filter(
+            participants__user__username__icontains=username
+        ).first()
+        return Response({'message': order_room.id}, status=status.HTTP_200_OK)
+
+
 class OrderSuccessApi(CreateAPIView):
     """
     Api for create order and create OrderRoom

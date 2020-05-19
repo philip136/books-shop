@@ -4,18 +4,29 @@ import {CarOutlined, UserOutlined,ShoppingCartOutlined,} from '@ant-design/icons
 import { Link, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import * as actions from '../store/actions/auth';
+import {roomUrl} from '../constants';
+import { authAxios } from '../utils';
+
+
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
 
 
 const roomIdIsExist = (props) => {
-  try {
-    let roomId = localStorage.getItem('roomId');
-    return props.history.push(`/map/${roomId}/`);
-  } catch (error) {
-    console.log("У вас нет оформленных заказов");
-    return props.history.push('/');
-  }
+    const username = localStorage.getItem('username');
+    authAxios
+        .post(roomUrl, {username})
+            .then(res => {
+                const roomId = res.data.message;
+                if (localStorage.getItem('roomId') === null){
+                    localStorage.setItem('roomId', roomId);
+                }
+                return props.history.push(`/map/${roomId}/`);
+            })
+            .catch(err => {
+                console.log(err.message);
+                return props.history.push('/');
+            });
 }
 
 

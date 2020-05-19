@@ -13,10 +13,10 @@ class Product extends React.Component{
         <Link to={`/products/${this.props.data.id}/`}>
           <Card
             hoverable
-            cover={<img className='image-product' alt={this.props.data.name} src={this.props.data.image} />}
+            cover={<img className='image-product' alt={this.props.data.name} src={this.props.data.image}
+            width="250px" height="300px"/>}
           >
               <div className="additional">
-                <h3 className="title">{this.props.data.name} </h3>
                 <p className="description-product">{description} </p>
               </div>
           </Card>

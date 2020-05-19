@@ -1,30 +1,27 @@
-import {CART_START,
-        CART_SUCCESS,
-        CART_FAIL 
-} from './actionTypes';
+import * as actionTypes from './actionTypes';
 import { authAxios } from '../../utils';
 import { myCartUrl } from '../../constants';
 
 
 export const cartStart = () => {
     return {
-        type: CART_START
-    };
-};
+        type: actionTypes.CART_START
+    }
+}
 
 export const cartFail = (error) => {
     return {
-        type: CART_FAIL,
+        type: actionTypes.CART_FAIL,
         error: error
-    };
-};
-
-export const cartSuccess = cart => {
-    return {
-        type: CART_SUCCESS,
-        cart
     }
-};
+}
+
+export const cartSuccess = (data) => {
+    return {
+        type: actionTypes.CART_SUCCESS,
+        data
+    }
+}
 
 export const fetchCart = () => {
     return dispatch => {

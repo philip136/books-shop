@@ -49,19 +49,6 @@ class Product(models.Model):
     def set_count(self, new_count):
         self.count = new_count
 
-    def save(self, *args, **kwargs):
-        pillow_img_obj = Image.open(self.image)
-        new_image = resizeimage.resize_height(pillow_img_obj, 250)
-        new_image_io = BytesIO()
-        new_image.save(new_image_io, format="JPEG")
-        temp_name = self.image.name
-        self.image.delete(save=False)
-        self.image.save(
-            temp_name,
-            content=ContentFile(new_image_io.getvalue()),
-            save=False
-        )
-        super(Product, self).save(*args, **kwargs)
 
 
 class CartItem(models.Model):

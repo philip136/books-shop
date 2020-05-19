@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'rest_auth.registration',
     'corsheaders',
     'channels',
+    'sorl.thumbnail',
 ]
 
 MIDDLEWARE = [

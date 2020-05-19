@@ -37,7 +37,3 @@ export const getRoom = (id) => {
             });
     };
 };
-
-export const deleteOrderRoom = (id) => {
-    // api for delete room
-}

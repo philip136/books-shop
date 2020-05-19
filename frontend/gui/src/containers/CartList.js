@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import {Table, Button, Spin, message, Form, Input} from 'antd';
 import * as actions from '../store/actions/auth';
 import { DeleteOutlined,LoadingOutlined,EditOutlined } from '@ant-design/icons';
+import { Redirect } from "react-router-dom";
 
 
 const antIcon = <LoadingOutlined style={{fontSize: 24}} />
@@ -128,6 +129,10 @@ class CartList extends React.Component{
     
 
     render() {
+        if (this.props.token === null){
+            return <Redirect to="/login/" />;
+        }
+
         const { loading, selectedRowKeys, dataTable, total, columns} = this.state;
         const rowSelection = {
             selectedRowKeys,
@@ -155,10 +160,11 @@ class CartList extends React.Component{
     }
 }
 
-const mapDispathToProps = dispatch => {
+const mapStateToProps = state => {
     return {
-        logout: () => dispatch(actions.logout())
-    };
-};
+        token: state.auth.token
+    }
+}
 
-export default connect(null, mapDispathToProps)(CartList);
+
+export default connect(mapStateToProps)(CartList);

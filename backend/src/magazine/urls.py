@@ -12,6 +12,7 @@ from .views import (ProductsApi,
                     LocationDetail,
                     OrderRoomApi,
                     ProfileApi,
+                    OrderRoomConnectApi,
                     )
 
 
@@ -29,4 +30,5 @@ urlpatterns = [
     path("api/location/<int:pk>/", LocationDetail.as_view(), name="location-detail"),
     path("api/order-room/<int:pk>/", OrderRoomApi.as_view(), name="order-room"),
     path("api/profile/<int:pk>/", ProfileApi.as_view(), name='profile'),
+    path("api/get-room/", OrderRoomConnectApi.as_view(), name='connect-to-room'),
 ]

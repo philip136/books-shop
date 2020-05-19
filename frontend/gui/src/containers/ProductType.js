@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import axios from 'axios';
 import {productTypeUrl} from "../constants";
-import {List} from "antd";
+import {List, Card} from "antd";
 import Product from "../components/Product";
 
 
@@ -15,7 +15,6 @@ class ProductType extends Component{
         const slug = this.props.match.params.productType;
         axios.get(productTypeUrl(slug))
             .then(res => {
-                console.log(res);
                 this.setState({
                     products: res.data
                 });
@@ -47,7 +46,9 @@ class ProductType extends Component{
                 dataSource={this.state.products}
                 renderItem={item => (
                 <List.Item>
-                    <Product data={item} />
+                     <Card title={item.name}>
+                            <Product data={item} />
+                     </Card>
                 </List.Item>
                 )}
             />

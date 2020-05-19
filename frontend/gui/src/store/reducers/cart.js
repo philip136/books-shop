@@ -31,12 +31,9 @@ const cartFail = (state, action) => {
 
 const reducer = (state=initialState, action) => {
     switch (action.type){
-        case CART_START:
-            return cartStart(state,action);
-        case CART_SUCCESS:
-            return cartSuccess(state, action);
-        case CART_FAIL:
-            return cartFail(state, action);
+        case CART_START: return cartStart(state,action);
+        case CART_SUCCESS: return cartSuccess(state, action);
+        case CART_FAIL: return cartFail(state, action);
         default:
             return state;
     }

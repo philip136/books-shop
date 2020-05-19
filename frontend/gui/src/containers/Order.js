@@ -3,16 +3,35 @@ import {Button, Form, Input, Select} from "antd";
 import {withMyHook} from "./Login";
 import {orderUrl} from "../constants";
 import {authAxios} from '../utils';
+import { Alert } from 'antd';
+import { connect } from "react-redux";
+import { Redirect } from "react-router-dom";
 
 
-const styleItems = {
-    marginRight: '15px'
-}
+
+const layout = {
+  labelCol: {
+    span: 6,
+  },
+  wrapperCol: {
+    span: 16,
+  },
+};
+const tailLayout = {
+  wrapperCol: {
+    offset: 2,
+    span: 16,
+  },
+};
+
+
 
 class OrderForm extends React.Component{
     state = {
         loading: false,
         error: null,
+        message: null,
+        showMessage: false,
     }
 
     handleCheckout = (data) => {
@@ -21,9 +40,21 @@ class OrderForm extends React.Component{
 
         authAxios
             .post(orderUrl, extendData)
+
             .then(res => {
-                const roomId = res.data.message['id'];
-                localStorage.setItem('roomId', roomId);
+                if (typeof(res.data.message) === "string"){
+                    this.setState({
+                        showMessage: true,
+                        message: res.data.message,
+                    });
+                }
+                else {
+                    if (localStorage.getItem('roomId') === null){
+                        localStorage.setItem('roomId', res.data.message['id']);
+                    }
+                    const roomId = localStorage.getItem('roomId');
+                    return this.props.history.push(`/map/${roomId}/`);
+                }
             })
             .catch(err => {
                 this.setState({
@@ -31,14 +62,24 @@ class OrderForm extends React.Component{
                     loading: false
                 })
             })
+
     };
 
     render(){
+        if (this.props.token === null){
+            return <Redirect to="/login/" />;
+        }
+
         const form = this.props.form;
+
         return (
             <div>
-                <Form form={form} onFinish={this.handleCheckout} style={{display: 'table'}}>
-                    <Form.Item
+                {this.state.showMessage
+                &&
+               <Alert message={this.state.message} type="info" />
+                }
+                <Form {...layout} form={form} onFinish={this.handleCheckout}>
+                    <Form.Item {...tailLayout}
                         label="Ваше имя"
                         name="first_name"
                         rules = {[
@@ -50,7 +91,7 @@ class OrderForm extends React.Component{
                     >
                         <Input placeholder="Введите ваше имя"  />
                     </Form.Item>
-                    <Form.Item
+                    <Form.Item {...tailLayout}
                         label="Ваша фамилия"
                         name="last_name"
                         rules = {[
@@ -62,7 +103,7 @@ class OrderForm extends React.Component{
                     >
                         <Input placeholder="Введите вашу фамилию" />
                     </Form.Item>
-                    <Form.Item
+                    <Form.Item {...tailLayout}
                         label="Мобильный телефон"
                         name="phone"
                         rules = {[
@@ -75,7 +116,7 @@ class OrderForm extends React.Component{
                     >
                         <Input placeholder="Введите ваш номер мобильного телефона" />
                     </Form.Item>
-                    <Form.Item
+                    <Form.Item {...tailLayout}
                         label="Тип покупки"
                         name="purchase_type"
                         rules = {[
@@ -90,15 +131,27 @@ class OrderForm extends React.Component{
                             <Select.Option value="Доставка курьером">Доставка курьером</Select.Option>
                         </Select>
                     </Form.Item>
-                    <Button type="primary" htmlType="submit" style={{marginRight: '10px'}}>
-                  Продолжить
-                </Button>
+                    <Form.Item {...tailLayout}>
+                      <Button  type="primary" htmlType="submit">
+                         Продолжить
+                      </Button>
+                    </Form.Item>
                 </Form>
             </div>
+
         );
     }
 }
 
 const order = withMyHook(OrderForm)
 
-export default order;
+const mapStateToProps = state => {
+    return {
+        token: state.auth.token,
+    }
+}
+
+export default connect(mapStateToProps)(order);
+
+
+
