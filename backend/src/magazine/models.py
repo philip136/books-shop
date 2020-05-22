@@ -50,7 +50,6 @@ class Product(models.Model):
         self.count = new_count
 
 
-
 class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     count = models.PositiveIntegerField(default=1)
@@ -155,6 +154,7 @@ class Location(models.Model):
 
 class Shop(models.Model):
     name = models.CharField(max_length=50)
+    personal = models.ManyToManyField(Profile)
     position = models.ForeignKey(Location, on_delete=models.CASCADE)
     starts_working = models.TimeField(default=datetime.time(hour=9, minute=0, second=0))
     finishes_working = models.TimeField(default=datetime.time(hour=22, minute=0, second=0))

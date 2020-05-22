@@ -10,16 +10,44 @@ import {Link} from 'react-router-dom';
 import {orderRoomUrl} from '../constants';
 import { authAxios } from '../utils';
 import { Redirect } from "react-router-dom";
+import axios from 'axios';
+
+
+function getLocation(){
+    return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition((position) => {
+            resolve({
+                lat: position.coords.latitude,
+                lng: position.coords.longitude,
+            });
+        }, () => {
+            resolve(axios
+                    .get('https://ipapi.co/json')
+                    .then(res => res.json())
+                    .then(location => {
+                        return {
+                            lat: location.latitude,
+                            lng: location.longitude,
+                        };
+                 }));
+            });
+        });
+};
 
 
 
 class MapContainer extends React.Component {
     initialiseRoom() {
         this.waitForSocketConnection(() => {
-            WebSocketInstance.fetchLocation(
+            try{
+                WebSocketInstance.fetchLocations(
                 localStorage.getItem('username'),
                 this.props.match.params.roomID
-            );
+                )
+            }
+            catch {
+                this.props.history.push('/');
+            }
         });
         WebSocketInstance.connect(this.props.match.params.roomID);
     }
@@ -28,16 +56,19 @@ class MapContainer extends React.Component {
         super(props);
         this.initialiseRoom();
         this.state =  {
-            location: null,
+            location: {
+                lat: null,
+                lng: null,
+            },
             location_another_place: {
-                lat: 50.121231,
-                lng: 27.15123
+                lat: null,
+                lng: null,
             },
             zoom: 11,
-            status_user: false,
             client: null,
-            current_user: localStorage.getItem('username'),
-        }
+            courier: null,
+            staff: false,
+        };
     }
 
     waitForSocketConnection(callback) {
@@ -54,59 +85,82 @@ class MapContainer extends React.Component {
         }, 100)
     }
 
-    initialCurrentLocation = () => {
-        const options = {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 0
-        }
-        navigator.geolocation.getCurrentPosition(
-            position => {
-                const location = {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude
-                }
-                this.setState({location:location});
-            },
-            error => console.log(error.message),
-            options
-        );
-    };
-
     sendLocation = () => {
-        // When user clicked on button state change current_location
-        const locationObject = {
-            who_shared: localStorage.getItem('username'),
-            location: this.state.location,
-            roomID: this.props.match.params.roomID
-        };
-        WebSocketInstance.newRoomLocation(locationObject);
-        this.setState({location: locationObject.location});
-        window.location.reload(false);
+        if (localStorage.getItem('username') === this.state.client){
+            const locationObject = {
+                who_shared: localStorage.getItem('username'),
+                location: this.state.location,
+                roomID: this.props.match.params.roomID
+            };
+            WebSocketInstance.newRoomLocation(locationObject);
+            this.setState({location: locationObject.location});
+        }else {
+            const locationObject = {
+                who_shared: localStorage.getItem('username'),
+                location: this.state.location_another_place,
+                roomID: this.props.match.params.roomID
+            };
+            WebSocketInstance.newRoomLocation(locationObject);
+            this.setState({location_another_place: locationObject.location});
+        }
+    }
+
+    parsedPoint = (point) => {
+        let lat = point.split(' ')[1].slice(1,);
+        let lng = point.split(' ')[2].slice(0, point.split(' ')[2].length-1);
+        return [lat*1, lng*1];
     }
 
     componentDidMount() {
-        this.initialCurrentLocation();
-        this.props.roomOrder(this.props.match.params.roomID);
-    }
-
-    componentDidUpdate(prevProps, prevState) {
-        if (prevProps.roomInfo !== this.props.roomInfo){
-            this.props.roomInfo['participants'].map((participant, i) => {
-                if (participant['user']['username'] === localStorage.getItem('username')
-                ){
-                    if (participant['status_staff'] === true){
-                        this.setState({
-                            status_user: true
-                        });
-                    }else{
-                        this.setState({
-                            client: participant['user']['username']
-                        })
-                    }
+        this.props.roomOrder(this.props.match.params.roomID)
+        .then(() => {
+            let courier_username = this.props.roomInfo.participants[1].user.username;
+            let client_username = this.props.roomInfo.participants[0].user.username;
+            let location_client = this.props.roomInfo.locations[0];
+            let location_courier = this.props.roomInfo.locations[1];
+            this.setState({
+                client: client_username,
+                courier: courier_username,
+                location: {
+                    lat: this.parsedPoint(location_client.point)[1],
+                    lng: this.parsedPoint(location_client.point)[0],
+                },
+                location_another_place: {
+                    lat: this.parsedPoint(location_courier.point)[1],
+                    lng: this.parsedPoint(location_courier.point)[0],
+                },
+            });
+        })
+        .then(() => {
+             getLocation()
+            .then(location_points => {
+                if (localStorage.getItem('username') === this.state.client) {
+                    const locationObject = {
+                        who_shared: this.state.client,
+                        location: location_points,
+                        roomID: this.props.match.params.roomID
+                    };
+                    console.log('for client');
+                    WebSocketInstance.newRoomLocation(locationObject);
+                    this.setState({
+                        location: location_points,
+                        staff: false,
+                    });
+                }else if (localStorage.getItem('username') === this.state.courier){
+                    console.log('for courier');
+                    const locationObject = {
+                        who_shared: this.state.courier,
+                        location: location_points,
+                        roomID: this.props.match.params.roomID
+                    };
+                    WebSocketInstance.newRoomLocation(locationObject);
+                    this.setState({
+                        location_another_place: location_points,
+                        staff: true,
+                    });
                 }
-            })
-        }
+           });
+        });
     }
 
     componentWillReceiveProps(newProps) {
@@ -120,61 +174,31 @@ class MapContainer extends React.Component {
             });
             WebSocketInstance.connect(newProps.match.params.roomID);
         }
-
-        if (newProps.roomInfo !== null){
-            const another_location = this.renderRoomLocations(newProps.roomInfo['locations']);
-            if (typeof(another_location[0]) === "undefined"){
-                this.setState({
-                    location_another_place: another_location[1],
-                })
-            } else {
-                this.setState({
-                    location_another_place: another_location[0]
-                });
-            }
-
-        }
     }
 
     handlePayment = () => {
-        const {client} = this.state
-        authAxios
+        let client = this.state.client;
+        if (localStorage.getItem('username') === this.state.courier){
+            authAxios
             .delete(orderRoomUrl(this.props.match.params.roomID),{client})
                 .then(res => {
-                    console.log(res.data);
+                    localStorage.removeItem('roomId');
                     this.props.history.push('/');
                 })
                 .catch(err => {
                     console.log(err.message);
-                });
-    }
-
-    renderRoomLocations = (locations) => {
-        const {current_user} = this.state;
-        if (locations !== null){
-            return locations.map((location, i, arr) => {
-                if (location['title'].search(current_user) === -1){
-                    const location_another_place = {
-                        lat: location['latitude'],
-                        lng: location['longitude']
-                    };
-                    return location_another_place;
-                }
             });
         }
     }
 
-    render(){
-        if (this.props.token === null){
-            return <Redirect to="/login/" />;
-        }
-        const {error, loading, payment} = this.props;
-        const position = this.state.location;
-        const {current_user} = this.state;
 
+    render(){
+        const {error, loading, payment} = this.props;
+        const {client, courier, status_user} = this.state;
+        console.log(this.state);
         return (
                 <LeafletMap
-                    center={position}
+                    center={this.state.location}
                     zoom={this.state.zoom}
                     maxZoom={16}
                     easeLinearity={0.35}
@@ -183,18 +207,20 @@ class MapContainer extends React.Component {
                   attribution='&amp;copy <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
                   url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"
                 />
-                 <Marker position={position} icon={ iconPerson }>
+                 <Marker position={this.state.location} icon={ iconPerson }>
                     <Popup>
-                        Местоположение {current_user}
+                        {client}
                     </ Popup>
                  </ Marker>
+
                 <Marker position={this.state.location_another_place} icon={ iconPerson }>
                     <Popup>
-                        Местоположение {current_user}
+                       {courier}
                     </ Popup>
-                 </ Marker>
+                </ Marker>
+
                 <Control position='topleft'>
-                    <Button className='map-button' onClick={ () => this.sendLocation()}>
+                    <Button className='map-button' onClick={ () => this.sendLocation(status_user)}>
                         Обновить
                     </ Button>
                 </ Control>
@@ -203,13 +229,15 @@ class MapContainer extends React.Component {
                     <Link to="/">Вернуться</Link>
                 </Button>
                  </Control>
-                 {this.state.status_user
-                    &&
+                 {this.state.staff
+                    ?
                     <Control position='topleft'>
                         <Button className='map-button' onClick={() => this.handlePayment()}>
                             Оплачено
                         </Button>
                     </Control>
+                    :
+                    null
                  }
             </ LeafletMap>
         );

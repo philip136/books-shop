@@ -11,18 +11,9 @@ from django.contrib.gis.geos import fromstr
 import json
 
 
-def get_current_location(username):
-    profile = get_object_or_404(Profile, user__username=username)
-    try:
-        location = Location.objects.get(profile=profile)
-    except Location.DoesNotExist:
-        location = Location.objects.create(
-            title=f'Текущая позиция {profile.user.username}',
-            profile=profile
-        )
-        location.point = fromstr('POINT(27.567444 53.893009)', srid=4326)
-        location.save()
-    return location
+def get_current_locations(roomId):
+    room = get_object_or_404(RoomOrder, id=roomId)
+    return room.locations.all()
 
 
 def get_current_profile(username):
@@ -35,11 +26,11 @@ def get_current_order_room(roomId):
 
 
 class GeoConsumer(WebsocketConsumer):
-    def fetch_location(self, data):
-        location = get_current_location(data['username'])
+    def fetch_locations(self, data):
+        locations = get_current_locations(data['roomID'])
         content = {
-            'command': 'location',
-            'location': self.location_to_json(location)
+            'command': 'locations',
+            'locations': self.locations_to_json(locations)
         }
         self.send_location(content)
 
@@ -69,7 +60,7 @@ class GeoConsumer(WebsocketConsumer):
         return self.send_room_location(content)
 
     commands = {
-        'fetch_location': fetch_location,
+        'fetch_locations': fetch_locations,
         'new_location': new_location
     }
 
@@ -91,6 +82,12 @@ class GeoConsumer(WebsocketConsumer):
     def receive(self, text_data=None, bytes_data=None):
         data = json.loads(text_data)
         self.commands[data['command']](self, data)
+
+    def locations_to_json(self, locations):
+        result = []
+        for location in locations:
+            result.append(self.location_to_json(location))
+        return result
 
     def location_to_json(self, location):
         return {

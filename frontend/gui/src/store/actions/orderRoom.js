@@ -25,15 +25,14 @@ export const orderRoomSuccess = (data) => {
 }
 
 export const getRoom = (id) => {
-    return dispatch => {
-        dispatch(orderRoomStart());
-        authAxios
-            .get(orderRoomUrl(id))
-            .then(res => {
-                dispatch(orderRoomSuccess(res.data));
-            })
-            .catch(err => {
-                dispatch(orderRoomFail(err));
-            });
+    return async dispatch => {
+        dispatch(orderRoomStart);
+        try {
+           const res = await authAxios.get(orderRoomUrl(id));
+           dispatch(orderRoomSuccess(res.data));
+        }
+        catch(err) {
+            dispatch(orderRoomFail(err));
+        }
     };
 };

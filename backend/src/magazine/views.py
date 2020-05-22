@@ -211,7 +211,6 @@ class LocationDetail(RetrieveUpdateDestroyAPIView):
 
     def update(self, request, *args, **kwargs):
         """ Setup pos for users calling in React map"""
-        # for example 53.893009 27.567444 -> Minsk
         user = request.data.get('user')
         point = request.data.get('point').split(' ')
         serializer = LocationSerializer(data=request.data)
@@ -290,6 +289,8 @@ class OrderRoomConnectApi(RetrieveAPIView):
     """
     Api for get room order for courier
     """
+    queryset = RoomOrder.objects.all()
+    permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
         username = request.data.get('username')
@@ -320,7 +321,6 @@ class OrderSuccessApi(CreateAPIView):
                 'last_name': request.data.get('last_name'),
                 'phone': request.data.get('phone'),
                 'date': datetime.datetime.now(),
-
                 'purchase_type': request.data.get('purchase_type'),
             }
             shop = Shop.objects.first()
@@ -331,9 +331,13 @@ class OrderSuccessApi(CreateAPIView):
                     roomOrder = RoomOrder()
                     roomOrder.save()
                     profile = Profile.objects.get(user=customer)
+                    personal = shop.personal.filter(busy=False).first()
+                    location_customer = Location.objects.create(profile=profile)
+                    location_customer.save()
                     roomOrder.participants.add(profile)
+                    roomOrder.participants.add(personal)
+                    roomOrder.locations.add(location_customer)
                     roomOrder.locations.add(shop.position)
-
                     serializer_room = OrderRoomSerializer(instance=roomOrder)
                     return Response({
                         'message': serializer_room.data,
@@ -345,8 +349,14 @@ class OrderSuccessApi(CreateAPIView):
                     if profile_driver is not None:
                         room_order = RoomOrder()
                         room_order.save()
+                        customer_location = Location.objects.create(profile=profile_customer)
+                        driver_location = Location.objects.create(profile=profile_driver)
+                        customer_location.save()
+                        driver_location.save()
                         room_order.participants.add(profile_customer)
                         room_order.participants.add(profile_driver)
+                        room_order.locations.add(customer_location)
+                        room_order.locations.add(driver_location)
                         serializer_room = OrderRoomSerializer(instance=room_order)
                         order.save()
                         return Response({

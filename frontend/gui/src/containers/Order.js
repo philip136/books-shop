@@ -49,9 +49,7 @@ class OrderForm extends React.Component{
                     });
                 }
                 else {
-                    if (localStorage.getItem('roomId') === null){
-                        localStorage.setItem('roomId', res.data.message['id']);
-                    }
+                    localStorage.setItem('roomId', res.data.message['id']);
                     const roomId = localStorage.getItem('roomId');
                     return this.props.history.push(`/map/${roomId}/`);
                 }
@@ -66,9 +64,7 @@ class OrderForm extends React.Component{
     };
 
     render(){
-        if (this.props.token === null){
-            return <Redirect to="/login/" />;
-        }
+
 
         const form = this.props.form;
 

@@ -1,5 +1,6 @@
 import {socket_url} from "./constants";
 
+
 class WebsocketService {
     static instance = null;
     callbacks = {};
@@ -44,17 +45,14 @@ class WebsocketService {
         if (Object.keys(this.callbacks).length === 0) {
             return;
         }
-        if (command === 'location') {
+        if (command === 'locations' || command === 'new_location') {
             this.callbacks[command](parsedData.location);
-        }
-        if (command === 'new_location') {
-            this.callbacks[command](parsedData.location)
         }
     }
 
-    fetchLocation(username, roomID) {
+    fetchLocations(username, roomID) {
         this.sendLocation({
-            command: 'fetch_location',
+            command: 'fetch_locations',
             username: username,
             roomID: roomID
         });
@@ -69,8 +67,8 @@ class WebsocketService {
         })
     }
 
-    addCallbacks(locationCallback, newLocationCallback) {
-        this.callbacks['location'] = locationCallback;
+    addCallbacks(locationsCallback, newLocationCallback) {
+        this.callbacks['locations'] = locationsCallback;
         this.callbacks['new_location'] = newLocationCallback;
     }
 
