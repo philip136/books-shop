@@ -124,7 +124,7 @@ class Profile(models.Model):
         verbose_name_plural = "Профили"
 
     def __str__(self):
-        return f'Профиль пользователя: {self.user.username}'
+        return self.user.username
 
 
 class Location(models.Model):

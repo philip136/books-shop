@@ -4,6 +4,7 @@ import {CarOutlined, UserOutlined,ShoppingCartOutlined,} from '@ant-design/icons
 import { Link, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import * as actions from '../store/actions/auth';
+import * as locationActions from '../store/actions/orderRoom';
 import {roomUrl} from '../constants';
 import { authAxios } from '../utils';
 
@@ -13,20 +14,16 @@ const { Header, Content, Sider } = Layout;
 
 
 const roomIdIsExist = (props) => {
-    const username = localStorage.getItem('username');
     authAxios
-        .post(roomUrl, {username})
-            .then(res => {
-                const roomId = res.data.message;
-                if (localStorage.getItem('roomId') === null){
-                    localStorage.setItem('roomId', roomId);
-                }
-                return props.history.push(`/map/${roomId}/`);
-            })
-            .catch(err => {
-                console.log(err.message);
-                return props.history.push('/');
-            });
+        .post(roomUrl, {username: props.username})
+        .then(res => {
+            props.history.push(`/map/${res.data.message}/`);
+            props.getUserRoom(res.data.message);
+        })
+        .catch(err => {
+            console.log(err.message);
+            props.history.push('/');
+        });
 }
 
 
@@ -133,12 +130,17 @@ const CustomLayout = (props) => {
       );
 }
 
-
+const mapStateToProps = state => {
+    return {
+        username: state.auth.username
+    };
+};
 
 const mapDispatchToProps = dispatch => {
   return {
-    logout: () => dispatch(actions.logout())
-  }
-}
+    logout: () => dispatch(actions.logout()),
+    getUserRoom: (id) => dispatch(locationActions.getUserRoom(id))
+  };
+};
 
-export default withRouter(connect(null, mapDispatchToProps)(CustomLayout));
+export default withRouter(connect(mapStateToProps, mapDispatchToProps)(CustomLayout));

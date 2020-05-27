@@ -35,14 +35,14 @@ class NormalLoginForm extends React.Component{
 
   onFinish = (value) => {
     this.props.onAuth(value.username, value.password);
+    this.props.history.push('/');
   }
 
   render(){
-    const { token } = this.props
-    if (token){
-      return <Redirect to='/' />
-    }
-    else{
+      if (this.props.token !== null){
+        return (<Redirect to='/' />)
+      }
+
       let errorMessage = null;
       if (this.props.error) {
           errorMessage = (
@@ -106,7 +106,6 @@ class NormalLoginForm extends React.Component{
         </div>
       );
     }
-  }
 }
 
 const wrappedForm = withMyHook(NormalLoginForm);

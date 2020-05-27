@@ -45,7 +45,10 @@ class WebsocketService {
         if (Object.keys(this.callbacks).length === 0) {
             return;
         }
-        if (command === 'locations' || command === 'new_location') {
+        if (command === 'locations') {
+            this.callbacks[command](parsedData.locations);
+        }
+        if (command === 'new_location') {
             this.callbacks[command](parsedData.location);
         }
     }
@@ -59,6 +62,7 @@ class WebsocketService {
     }
 
     newRoomLocation(location) {
+        console.log(location);
         this.sendLocation({
             command: 'new_location',
             who_shared: location.who_shared,

@@ -5,12 +5,22 @@ import BaseRouter from './routes';
 import {BrowserRouter as Router } from 'react-router-dom';
 import {connect} from 'react-redux';
 import * as actions from './store/actions/auth';
+import * as locationActions from './store/actions/orderRoom';
 import './assets/style.css';
+import WebSocketInstance from "./websocket";
 
 class App extends Component {
 
   componentDidMount() {
     this.props.onTryAutoSignup();
+  }
+
+  constructor(props) {
+    super(props);
+    WebSocketInstance.addCallbacks(
+        this.props.setLocations.bind(this),
+        this.props.addLocation.bind(this)
+    );
   }
 
   render(){
@@ -28,14 +38,16 @@ class App extends Component {
 
 const mapStateToProps = state => {
   return {
-    isAuthenticated: state.auth.token !== null
+    isAuthenticated: state.auth.token
   }
 }
 
-const mapDispathToProps = dispatch => {
+const mapDispatchToProps = dispatch => {
   return {
-    onTryAutoSignup: () => dispatch(actions.authCheckState())
-  }
-}
+    onTryAutoSignup: () => dispatch(actions.authCheckState()),
+    addLocation: location => dispatch(locationActions.addLocation(location)),
+    setLocations: locations => dispatch(locationActions.setLocations(locations)),
+  };
+};
 
-export default connect(mapStateToProps, mapDispathToProps)(App);
+export default connect(mapStateToProps, mapDispatchToProps)(App);

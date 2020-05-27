@@ -35,15 +35,9 @@ class GeoConsumer(WebsocketConsumer):
         self.send_location(content)
 
     def new_location(self, data):
+        print(data)
         profile_contact = get_current_profile(data['who_shared'])
-        try:
-            location = Location.objects.get(
-                profile=profile_contact
-            )
-        except Location.DoesNotExist:
-            location = Location.objects.create(
-                profile=profile_contact
-            )
+        location = Location.objects.get(profile=profile_contact)
         location.point = fromstr(
             f"POINT({data['location']['lng']} {data['location']['lat']})",
             srid=4326)
@@ -55,7 +49,7 @@ class GeoConsumer(WebsocketConsumer):
         current_room.save()
         content = {
             'command': 'new_location',
-            'locations': self.location_to_json(location)
+            'location': self.location_to_json(location)
         }
         return self.send_room_location(content)
 

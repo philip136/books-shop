@@ -4,35 +4,32 @@ import {authAxios} from "../../utils";
 import {orderRoomUrl} from "../../constants";
 
 
-export const orderRoomStart = () => {
+export const addLocation = location => {
     return {
-        type: actionTypes.ORDER_ROOM_START
-    }
-}
-
-export const orderRoomFail = (error) => {
-    return {
-        type: actionTypes.ORDER_ROOM_FAIL,
-        error: error
-    }
-}
-
-export const orderRoomSuccess = (data) => {
-    return {
-        type: actionTypes.ORDER_ROOM_SUCCESS,
-        data
-    }
-}
-
-export const getRoom = (id) => {
-    return async dispatch => {
-        dispatch(orderRoomStart);
-        try {
-           const res = await authAxios.get(orderRoomUrl(id));
-           dispatch(orderRoomSuccess(res.data));
-        }
-        catch(err) {
-            dispatch(orderRoomFail(err));
-        }
+        type: actionTypes.ADD_LOCATION,
+        location: location
     };
 };
+
+export const setLocations = locations => {
+    return {
+        type: actionTypes.SET_LOCATIONS,
+        locations: locations
+    };
+};
+
+export const getUserRoomSuccess = room => {
+    return {
+        type: actionTypes.GET_ROOM_SUCCESS,
+        room: room
+    };
+};
+
+export const getUserRoom = (id) => {
+    return dispatch => {
+        authAxios
+        .get(orderRoomUrl(id))
+        .then(res => dispatch(getUserRoomSuccess(res.data)));
+    };
+};
+

@@ -2,55 +2,36 @@ import {updateObject} from "../utillity";
 import * as actionTypes from '../actions/actionTypes';
 
 const initialState = {
-    roomInfo: null,
-    error: null,
-    loading: false,
-    payment: false
-}
+    locations: [],
+    room: []
+};
 
-const orderRoomStart = (state, action) => {
+const addLocation = (state, action) => {
     return updateObject(state, {
-       error: null,
-       loading: true
+        locations: [...state.locations, action.location]
     });
-}
+};
 
-const orderRoomSuccess = (state, action) => {
+const setLocations = (state, action) => {
     return updateObject(state, {
-        roomInfo: action.data,
-        error: null,
-        loading: false,
-        payment: false,
-    })
-}
+        locations: action.locations
+    });
+};
 
-// When user paid order
-const orderRoomSuccessAndFinished = (state, action) => {
+const setRoom = (state, action) => {
     return updateObject(state, {
-        roomInfo: action.data,
-        error: null,
-        loading: false,
-        payment: true
-    })
-}
-
-const orderRoomFail = (state, action) => {
-    return updateObject(state, {
-        error: action.error,
-        loading: false,
-        payment: false
-    })
-}
+        room: action.room
+    });
+};
 
 const reducer = (state=initialState, action) => {
     switch (action.type) {
-        case actionTypes.ORDER_ROOM_START: return orderRoomStart(state, action);
-        case actionTypes.ORDER_ROOM_FAIL: return orderRoomFail(state, action);
-        case actionTypes.ORDER_ROOM_SUCCESS: return orderRoomSuccess(state, action);
-        case actionTypes.ORDER_ROOM_SUCCESS_AND_PAID: return orderRoomSuccessAndFinished(state,action);
+        case actionTypes.ADD_LOCATION: return addLocation(state, action);
+        case actionTypes.SET_LOCATIONS: return setLocations(state, action);
+        case actionTypes.GET_ROOM_SUCCESS: return setRoom(state, action);
         default:
             return state;
     }
-}
+};
 
 export default reducer;

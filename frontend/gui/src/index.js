@@ -4,7 +4,7 @@ import App from './App';
 import * as serviceWorker from './serviceWorker';
 import {createStore, compose, applyMiddleware, combineReducers} from 'redux';
 import authReducer from './store/reducers/auth';
-import orderRoomReducer from './store/reducers/orderRoom';
+import locationReducer from './store/reducers/orderRoom';
 import cartReducer from './store/reducers/cart';
 import thunk from 'redux-thunk';
 import { Provider } from 'react-redux';
@@ -14,7 +14,7 @@ import 'leaflet/dist/leaflet.css';
 const composeEnhances = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
 const rootReducer = combineReducers({
     auth: authReducer,
-    orderRoom: orderRoomReducer,
+    location: locationReducer,
     cart: cartReducer,
 });
 

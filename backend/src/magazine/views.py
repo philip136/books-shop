@@ -349,8 +349,13 @@ class OrderSuccessApi(CreateAPIView):
                     if profile_driver is not None:
                         room_order = RoomOrder()
                         room_order.save()
-                        customer_location = Location.objects.create(profile=profile_customer)
-                        driver_location = Location.objects.create(profile=profile_driver)
+                        customer_location = Location.objects.create(
+                            title=f'{profile_customer}',
+                            profile=profile_customer)
+                        driver_location = Location.objects.create(
+                            title=f'{profile_driver}',
+                            profile=profile_driver
+                        )
                         customer_location.save()
                         driver_location.save()
                         room_order.participants.add(profile_customer)
