@@ -77,7 +77,7 @@ class MapContainer extends React.Component {
         const currentUser = this.props.username;
         console.log(locations);
         return locations.map((location, i) => (
-            <Marker key={i} position={location.point} icon={ iconPerson }>
+            <Marker key={i} position={location.point.reverse()} icon={ iconPerson }>
                 <Popup>
                     {location.profile}
                 </ Popup>

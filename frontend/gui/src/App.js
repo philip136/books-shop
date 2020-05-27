@@ -19,7 +19,7 @@ class App extends Component {
     super(props);
     WebSocketInstance.addCallbacks(
         this.props.setLocations.bind(this),
-        this.props.addLocation.bind(this)
+        this.props.setLocations.bind(this)
     );
   }
 
