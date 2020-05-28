@@ -77,8 +77,8 @@ class Cart(models.Model):
 
     def add_to_cart(self, cart_item, owner):
         cart_item = CartItem.objects.get(id=cart_item.id)
-        cart_owner = Cart.objects.filter(owner=owner)
-        if cart_item not in cart_owner:
+        cart_owner = Cart.objects.get(owner=owner)
+        if cart_item not in cart_owner.products.all():
             self.products.add(cart_item)
             self.save()
 
@@ -87,6 +87,7 @@ class Cart(models.Model):
             if _item.product == product:
                 self.products.remove(_item)
                 product.count += _item.count
+                product.save()
                 self.cart_total -= _item.product_total
                 self.save()
     
@@ -125,6 +126,14 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+    @property
+    def get_busy(self):
+        return self.busy
+
+    @get_busy.setter
+    def get_busy(self, state):
+        self.busy = state
 
 
 class Location(models.Model):

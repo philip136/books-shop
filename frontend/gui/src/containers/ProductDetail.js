@@ -59,12 +59,15 @@ class ProductDetail extends React.Component{
                 if (res.status === 200){
                     message.warning(res.data['message']);
                 }
-                else {message.success(res.data['message']);}
+                else {
+                    message.success(res.data['message']);
+                }
             })
             .catch(err => {
                 this.setState({error: err});
                 message.error(err);
             });
+
     };
 
     handleChange = (value) => {

@@ -12,8 +12,6 @@ from rest_framework import status
 from django.contrib.gis.geos import (GEOSGeometry,
                                      Point)
 import datetime
-import json
-from rest_framework.views import APIView
 from rest_framework.generics import (ListAPIView,
                                      RetrieveAPIView,
                                      DestroyAPIView,
@@ -22,11 +20,9 @@ from rest_framework.generics import (ListAPIView,
                                      RetrieveUpdateDestroyAPIView,
                                      CreateAPIView)
 from rest_framework.response import Response
-from rest_framework.mixins import CreateModelMixin
 from rest_framework.permissions import (IsAdminUser,
                                         AllowAny,
                                         IsAuthenticated)
-from django.shortcuts import get_object_or_404
 from .serializer import (ProductSerializer,
                          CartItemSerializer,
                          CartSerializer,
@@ -103,10 +99,8 @@ class CartItemApi(RetrieveAPIView):
             count = request.data.get('count', None)
             product_total = product.get_price() * int(count)
             try:
-                item = CartItem.objects.filter(
-                    product=product
-                ).first()
                 cart = Cart.objects.get(owner=request.user)
+                item = cart.products.get(product=product)
                 if item in cart.products.all():
                     return Response({'message': 'Данный продукт уже есть у вас в корзине'},
                                     status=status.HTTP_200_OK
@@ -265,6 +259,9 @@ class ProfileApi(RetrieveAPIView):
 
 
 class OrderRoomApi(RetrieveAPIView, DestroyAPIView):
+    """
+    Api for finish payment
+    """
     queryset = RoomOrder.objects.all()
     serializer_class = OrderRoomSerializer
     permission_classes = (IsAuthenticated,)
@@ -272,13 +269,11 @@ class OrderRoomApi(RetrieveAPIView, DestroyAPIView):
     def destroy(self, request, *args, **kwargs):
         pk = kwargs['pk']
         room = RoomOrder.objects.get(pk=pk)
-        client, courier = room.participants.all()[0], room.participants.all()[1]
-        if request.user.username == client.user.username:
-            order = Order.objects.get(user__username=courier.user.username)
-            order.check_status = "Оплачен"
-        else:
-            order = Order.objects.get(user__username=client.user.username)
-            order.check_status = "Оплачен"
+        client, personal = room.participants.first(), room.participants.last()
+        order = Order.objects.get(user__username=client.user.username)
+        order.check_status = "Оплачен"
+        order.items.products.all().delete()
+        order.delete()
         room.delete()
         return Response({'message': 'Клиент оплатил товар'},
                         status=status.HTTP_204_NO_CONTENT
@@ -332,7 +327,10 @@ class OrderSuccessApi(CreateAPIView):
                     roomOrder.save()
                     profile = Profile.objects.get(user=customer)
                     personal = shop.personal.filter(busy=False).first()
-                    location_customer = Location.objects.create(profile=profile)
+                    location_customer = Location.objects.create(
+                        title=f'{profile}',
+                        profile=profile
+                    )
                     location_customer.save()
                     roomOrder.participants.add(profile)
                     roomOrder.participants.add(personal)
@@ -347,6 +345,7 @@ class OrderSuccessApi(CreateAPIView):
                     profile_customer = Profile.objects.get(user=customer)
                     profile_driver = order.search_free_driver()
                     if profile_driver is not None:
+                        profile_driver.get_busy = True
                         room_order = RoomOrder()
                         room_order.save()
                         customer_location = Location.objects.create(

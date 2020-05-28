@@ -1,11 +1,11 @@
 import React from 'react';
-import { Layout, Menu, Breadcrumb } from 'antd';
+import { Layout, Menu, Breadcrumb, message } from 'antd';
 import {CarOutlined, UserOutlined,ShoppingCartOutlined,} from '@ant-design/icons';
 import { Link, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
 import * as actions from '../store/actions/auth';
 import * as locationActions from '../store/actions/orderRoom';
-import {roomUrl} from '../constants';
+import { roomUrl } from '../constants';
 import { authAxios } from '../utils';
 
 
@@ -21,7 +21,7 @@ const roomIdIsExist = (props) => {
             props.getUserRoom(res.data.message);
         })
         .catch(err => {
-            console.log(err.message);
+            message.error(err);
             props.history.push('/');
         });
 }

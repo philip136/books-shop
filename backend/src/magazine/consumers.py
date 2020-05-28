@@ -3,10 +3,10 @@ from channels.generic.websocket import (WebsocketConsumer,
 from .models import (Profile,
                      User,
                      Location,
-                     RoomOrder)
+                     RoomOrder,
+                     Shop)
 from asgiref.sync import async_to_sync
 from django.shortcuts import get_object_or_404
-from django.core.serializers import serialize
 from django.contrib.gis.geos import fromstr
 import json
 
@@ -17,7 +17,12 @@ def get_current_locations(roomId):
 
 
 def get_current_profile(username):
-    profile = get_object_or_404(Profile, user__username=username)
+    try:
+        profile = Profile.objects.get(user__username=username)
+    except Profile.DoesNotExist:
+        profile = Shop.objects.first().personal.filter(
+            busy=False, status_staff=True
+        ).first()
     return profile
 
 
@@ -36,16 +41,12 @@ class GeoConsumer(WebsocketConsumer):
 
     def new_location(self, data):
         profile_contact = get_current_profile(data['who_shared'])
-        location = Location.objects.get(profile=profile_contact)
+        location = Location.objects.filter(profile=profile_contact).last()
         location.point = fromstr(
             f"POINT({data['location']['lng']} {data['location']['lat']})",
             srid=4326)
         location.save()
         current_room = get_current_order_room(data['roomID'])
-        if profile_contact not in current_room.participants.all():
-            current_room.participants.add(profile_contact)
-        current_room.locations.add(location)
-        current_room.save()
         content = {
             'command': 'new_location',
             'location': self.locations_to_json(current_room.locations.all())

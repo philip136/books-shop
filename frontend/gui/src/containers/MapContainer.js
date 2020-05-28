@@ -15,7 +15,7 @@ import axios from 'axios';
 
 class MapContainer extends React.Component {
     state = {
-       location: {lat: 52.0012, lng: 27.123}
+       location: {lat: 53.893009, lng: 27.567444}
     };
 
     initialiseRoom() {
@@ -104,7 +104,7 @@ class MapContainer extends React.Component {
                         Обновить
                     </ Button>
                 </ Control>
-                 <Control position='topleft'>
+                <Control position='topleft'>
                 <Button className='map-button'>
                     <Link to="/">Вернуться</Link>
                 </Button>
@@ -120,6 +120,5 @@ const mapStateToProps = (state) => {
         locations: state.location.locations
     };
 };
-
 
 export default connect(mapStateToProps)(MapContainer);
