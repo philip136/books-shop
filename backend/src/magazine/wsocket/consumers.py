@@ -1,10 +1,10 @@
 from channels.generic.websocket import (WebsocketConsumer,
                                         AsyncWebsocketConsumer)
-from .models import (Profile,
-                     User,
-                     Location,
-                     RoomOrder,
-                     Shop)
+from magazine.models import (Profile,
+                                         User,
+                                         Location,
+                                         RoomOrder,
+                                         Shop)
 from asgiref.sync import async_to_sync
 from django.shortcuts import get_object_or_404
 from django.contrib.gis.geos import fromstr

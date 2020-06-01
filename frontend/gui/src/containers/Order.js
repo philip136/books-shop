@@ -29,18 +29,19 @@ const tailLayout = {
 class OrderForm extends React.Component{
     state = {
         loading: false,
-        error: null,
         message: null,
         showMessage: false,
+    }
+
+    hasError = (fieldsError) => {
+        return Object.keys(fieldsError).some(field => fieldsError[field]);
     }
 
     handleCheckout = (data) => {
         let extendData = {...data};
         extendData.user = localStorage.getItem('username');
-
         authAxios
             .post(orderUrl, extendData)
-
             .then(res => {
                 if (typeof(res.data.message) === "string"){
                     this.setState({
@@ -55,10 +56,11 @@ class OrderForm extends React.Component{
                 }
             })
             .catch(err => {
-                this.setState({
-                    error: err,
-                    loading: false
-                })
+                if (err.response.status === 400){
+                    this.setState({
+                        error: err.message
+                    });
+                }
             })
 
     };
@@ -68,9 +70,10 @@ class OrderForm extends React.Component{
 
         return (
             <div>
-                {this.state.showMessage
-                &&
-               <Alert message={this.state.message} type="info" />
+                { this.state.showMessage ?
+                    <Alert message={this.state.message} type="info" />
+                    :
+                    null
                 }
                 <Form {...layout} form={form} onFinish={this.handleCheckout}>
                     <Form.Item {...tailLayout}

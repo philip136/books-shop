@@ -1,16 +1,14 @@
-from django.shortcuts import render
-from .models import (Product,
-                     CartItem,
-                     Cart,
-                     Order,
-                     TypeProduct,
-                     Location,
-                     Shop,
-                     Profile,
-                     RoomOrder)
+from magazine.models import (Product,
+                             CartItem,
+                             Cart,
+                             Order,
+                             TypeProduct,
+                             Location,
+                             Shop,
+                             Profile,
+                             RoomOrder)
 from rest_framework import status
-from django.contrib.gis.geos import (GEOSGeometry,
-                                     Point)
+from django.contrib.gis.geos import (GEOSGeometry)
 import datetime
 from rest_framework.generics import (ListAPIView,
                                      RetrieveAPIView,
@@ -20,21 +18,17 @@ from rest_framework.generics import (ListAPIView,
                                      RetrieveUpdateDestroyAPIView,
                                      CreateAPIView)
 from rest_framework.response import Response
-from rest_framework.permissions import (IsAdminUser,
-                                        AllowAny,
+from rest_framework.permissions import (AllowAny,
                                         IsAuthenticated)
-from .serializer import (ProductSerializer,
-                         CartItemSerializer,
-                         CartSerializer,
-                         TypeProductSerializer,
-                         ProfileSerializer,
-                         OrderSerializer,
-                         LocationSerializer,
-                         ShopSerializer,
-                         OrderRoomSerializer)
+from magazine.api.serializer import (ProductSerializer,
+                                     CartItemSerializer,
+                                     CartSerializer,
+                                     TypeProductSerializer,
+                                     ProfileSerializer,
+                                     OrderSerializer,
+                                     LocationSerializer,
+                                     OrderRoomSerializer)
 from django.contrib.auth.models import User
-from django.urls import reverse
-from django.http import QueryDict
 from django.core.exceptions import ObjectDoesNotExist
 from decimal import Decimal
 
@@ -55,8 +49,12 @@ class TypeProductsApi(RetrieveAPIView):
 
     def get_queryset(self):
         type_name = self.kwargs.get('type')
-        type_obj = TypeProduct.objects.get(type__icontains=type_name)
-        products = Product.objects.filter(type=type_obj.id)
+        type_obj = TypeProduct.objects.raw(
+            "SELECT id FROM magazine_typeproduct WHERE type LIKE LOWER(%s)", [type_name]
+        )
+        products = Product.objects.raw(
+            "SELECT id FROM magazine_product WHERE id=%s", [type_obj.id]
+        )
         return products
 
 
@@ -292,7 +290,9 @@ class OrderRoomConnectApi(RetrieveAPIView):
         order_room = RoomOrder.objects.filter(
             participants__user__username__icontains=username
         ).first()
-        return Response({'message': order_room.id}, status=status.HTTP_200_OK)
+        if order_room is not None:
+            return Response({'message': order_room.id}, status=status.HTTP_200_OK)
+        return Response({'message': 'Текущих комнат нет'})
 
 
 class OrderSuccessApi(CreateAPIView):

@@ -13,8 +13,8 @@ from .models import (Product,
 
 
 class LocationAdmin(admin.OSMGeoAdmin):
-    list_display = ['title', 'address', 'longitude', 'latitude']
-    search_fields = ['title', 'address']
+    list_display = ['title', 'longitude', 'latitude']
+    search_fields = ['title', ]
 
 
 admin.site.register(Location, LocationAdmin)

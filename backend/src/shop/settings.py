@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'channels',
     'sorl.thumbnail',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
@@ -49,7 +50,13 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
 ]
+
+INTERNAL_IPS = [
+    '127.0.0.1',
+]
+
 
 ROOT_URLCONF = 'shop.urls'
 
@@ -96,9 +103,6 @@ ACCOUNT_AUTHENTICATION_METHOD = 'username'
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
 
-# Database
-# https://docs.djangoproject.com/en/3.0/ref/settings/#databases
-
 # login: philip; password: test12345
 
 DATABASES = {
@@ -132,12 +136,9 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_AUTH_REGISTER_SERIALIZERS = {
-    'REGISTER_SERIALIZER': 'magazine.serializer.RegisterSerializer',
+    'REGISTER_SERIALIZER': 'magazine.api.serializer.RegisterSerializer',
 }
-# Internationalization
-# https://docs.djangoproject.com/en/3.0/topics/i18n/
 
-GOOGLE_MAPS_API_KEY = 'AIzaSyAVSBjiIkTUhr2NGv30bLUXA1ADmDf3FeU'
 
 LANGUAGE_CODE = 'en-us'
 
@@ -149,9 +150,6 @@ USE_L10N = True
 
 USE_TZ = True
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)

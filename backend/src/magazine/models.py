@@ -1,13 +1,8 @@
 from django.db import models
 from sorl.thumbnail import ImageField
-from django.conf import settings
 from decimal import Decimal
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models as models_gis
-from PIL import Image
-from io import BytesIO
-from django.core.files.base import ContentFile
-from resizeimage import resizeimage
 import datetime
 
 
@@ -117,8 +112,6 @@ ORDER_TYPE_OF_PURCHASE = [
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     busy = models.BooleanField(default=False)
-    payment = models.BooleanField(default=False)
-    status_staff = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Профиль"
@@ -137,8 +130,7 @@ class Profile(models.Model):
 
 
 class Location(models.Model):
-    title = models.TextField(max_length=150, blank=True)
-    address = models.CharField(max_length=250, blank=True, null=True)
+    title = models.CharField(max_length=80, blank=True)
     profile = models.ForeignKey(Profile, on_delete=models.CASCADE,
                                 blank=True, null=True)
     point = models_gis.PointField(default='POINT(0 0)', srid=4326)
@@ -202,15 +194,15 @@ class RoomOrder(models.Model):
 
 
 class Order(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE)
     items = models.ForeignKey(Cart, on_delete=models.CASCADE)
-    total_price = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     phone = models.CharField(max_length=13)
     date = models.DateTimeField(default=datetime.datetime.today)
     purchase_type = models.CharField(max_length=30, choices=ORDER_TYPE_OF_PURCHASE, default="Самовывоз")
     status = models.CharField(max_length=30, choices=ORDER_STATUS_CHOICES, default="Принят к обработке")
+    payment = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Заказ"
@@ -223,7 +215,7 @@ class Order(models.Model):
     def search_free_driver():
         profile_drivers = Profile.objects.filter(
             busy=False,
-            status_staff=True,
+            user__is_staff=True
         ).first()
         return profile_drivers
 
