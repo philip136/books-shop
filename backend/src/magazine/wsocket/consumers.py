@@ -1,10 +1,10 @@
 from channels.generic.websocket import (WebsocketConsumer,
                                         AsyncWebsocketConsumer)
 from magazine.models import (Profile,
-                                         User,
-                                         Location,
-                                         RoomOrder,
-                                         Shop)
+                             User,
+                             Location,
+                             RoomOrder,
+                             Shop)
 from asgiref.sync import async_to_sync
 from django.shortcuts import get_object_or_404
 from django.contrib.gis.geos import fromstr
@@ -20,8 +20,9 @@ def get_current_profile(username):
     try:
         profile = Profile.objects.get(user__username=username)
     except Profile.DoesNotExist:
-        profile = Shop.objects.first().personal.filter(
-            busy=False, status_staff=True
+        shop = Shop.objects.first()
+        profile = shop.personal.filter(
+            busy=False, user__is_staff=True,
         ).first()
     return profile
 

@@ -8,6 +8,8 @@ from magazine.models import (Product,
                              Profile,
                              RoomOrder)
 from rest_framework import status
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from django.contrib.gis.geos import (GEOSGeometry)
 import datetime
 from rest_framework.generics import (ListAPIView,
@@ -41,20 +43,15 @@ class TypeProductsApi(RetrieveAPIView):
     serializer_class = TypeProductSerializer
     permission_classes = (AllowAny,)
 
+    @method_decorator(cache_page(86400))
     def get(self, request, *args, **kwargs):
-        products = [product for product in self.get_queryset()]
-        return Response(self.serializer_class(products,
-                                              many=True,
-                                              context={'request': request}).data)
+        products = [product for product in self.get_queryset().iterator()]
+        return Response(self.serializer_class(products, many=True,
+                        context={'request': request}).data)
 
     def get_queryset(self):
         type_name = self.kwargs.get('type')
-        type_obj = TypeProduct.objects.raw(
-            "SELECT id FROM magazine_typeproduct WHERE type LIKE LOWER(%s)", [type_name]
-        )
-        products = Product.objects.raw(
-            "SELECT id FROM magazine_product WHERE id=%s", [type_obj.id]
-        )
+        products = Product.objects.filter(type__type__icontains=type_name)
         return products
 
 
@@ -65,6 +62,12 @@ class ProductsApi(ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = (AllowAny,)
+
+    @method_decorator(cache_page(86400))
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)
 
 
 class ProductDetailApi(RetrieveAPIView):
@@ -270,12 +273,12 @@ class OrderRoomApi(RetrieveAPIView, DestroyAPIView):
         client, personal = room.participants.first(), room.participants.last()
         order = Order.objects.get(user__username=client.user.username)
         order.check_status = "Оплачен"
+        order.payment = True
         order.items.products.all().delete()
         order.delete()
         room.delete()
         return Response({'message': 'Клиент оплатил товар'},
-                        status=status.HTTP_204_NO_CONTENT
-                        )
+                        status=status.HTTP_204_NO_CONTENT)
 
 
 class OrderRoomConnectApi(RetrieveAPIView):
@@ -319,7 +322,7 @@ class OrderSuccessApi(CreateAPIView):
                 'purchase_type': request.data.get('purchase_type'),
             }
             shop = Shop.objects.first()
-            if shop._working():
+            if shop.is_working():
                 if request.data.get('purchase_type') == "Самовывоз":
                     order = Order.objects.create(**data)
                     order.save()

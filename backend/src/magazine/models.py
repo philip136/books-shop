@@ -167,10 +167,9 @@ class Shop(models.Model):
     def __str__(self):
         return f'Магазин {self.name}'
 
-    @staticmethod
-    def _working():
+    def is_working(self):
         time_now, _ = datetime.datetime.now(), datetime.datetime.today()
-        time_close = datetime.datetime.combine(_,datetime.time(hour=22, minute=0, second=0))
+        time_close = datetime.datetime.combine(_, datetime.time(hour=22, minute=0, second=0))
         if time_now > time_close:
             return False
         return True
@@ -211,8 +210,7 @@ class Order(models.Model):
     def __str__(self):
         return f"Заказ номер {self.id}"
 
-    @staticmethod
-    def search_free_driver():
+    def search_free_driver(self):
         profile_drivers = Profile.objects.filter(
             busy=False,
             user__is_staff=True

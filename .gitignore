@@ -1,9 +1,12 @@
 env/
 *.pyc
 *.xml
-*/migrations/*
+**/migrations/
+media/
+static/
 */__pycache__/
 *.png
 *.jpg
 *.log
 .vscode/
+.idea/
