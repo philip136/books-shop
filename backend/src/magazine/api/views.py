@@ -1,16 +1,16 @@
-from django.shortcuts import render
-from .models import (Product,
-                     CartItem,
-                     Cart,
-                     Order,
-                     TypeProduct,
-                     Location,
-                     Shop,
-                     Profile,
-                     RoomOrder)
+from magazine.models import (Product,
+                             CartItem,
+                             Cart,
+                             Order,
+                             TypeProduct,
+                             Location,
+                             Shop,
+                             Profile,
+                             RoomOrder)
 from rest_framework import status
-from django.contrib.gis.geos import (GEOSGeometry,
-                                     Point)
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.contrib.gis.geos import (GEOSGeometry)
 import datetime
 from rest_framework.generics import (ListAPIView,
                                      RetrieveAPIView,
@@ -20,21 +20,17 @@ from rest_framework.generics import (ListAPIView,
                                      RetrieveUpdateDestroyAPIView,
                                      CreateAPIView)
 from rest_framework.response import Response
-from rest_framework.permissions import (IsAdminUser,
-                                        AllowAny,
+from rest_framework.permissions import (AllowAny,
                                         IsAuthenticated)
-from .serializer import (ProductSerializer,
-                         CartItemSerializer,
-                         CartSerializer,
-                         TypeProductSerializer,
-                         ProfileSerializer,
-                         OrderSerializer,
-                         LocationSerializer,
-                         ShopSerializer,
-                         OrderRoomSerializer)
+from magazine.api.serializer import (ProductSerializer,
+                                     CartItemSerializer,
+                                     CartSerializer,
+                                     TypeProductSerializer,
+                                     ProfileSerializer,
+                                     OrderSerializer,
+                                     LocationSerializer,
+                                     OrderRoomSerializer)
 from django.contrib.auth.models import User
-from django.urls import reverse
-from django.http import QueryDict
 from django.core.exceptions import ObjectDoesNotExist
 from decimal import Decimal
 
@@ -47,16 +43,15 @@ class TypeProductsApi(RetrieveAPIView):
     serializer_class = TypeProductSerializer
     permission_classes = (AllowAny,)
 
+    @method_decorator(cache_page(86400))
     def get(self, request, *args, **kwargs):
-        products = [product for product in self.get_queryset()]
-        return Response(self.serializer_class(products,
-                                              many=True,
-                                              context={'request': request}).data)
+        products = [product for product in self.get_queryset().iterator()]
+        return Response(self.serializer_class(products, many=True,
+                        context={'request': request}).data)
 
     def get_queryset(self):
         type_name = self.kwargs.get('type')
-        type_obj = TypeProduct.objects.get(type__icontains=type_name)
-        products = Product.objects.filter(type=type_obj.id)
+        products = Product.objects.filter(type__type__icontains=type_name)
         return products
 
 
@@ -67,6 +62,12 @@ class ProductsApi(ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     permission_classes = (AllowAny,)
+
+    @method_decorator(cache_page(86400))
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)
 
 
 class ProductDetailApi(RetrieveAPIView):
@@ -272,12 +273,12 @@ class OrderRoomApi(RetrieveAPIView, DestroyAPIView):
         client, personal = room.participants.first(), room.participants.last()
         order = Order.objects.get(user__username=client.user.username)
         order.check_status = "Оплачен"
+        order.payment = True
         order.items.products.all().delete()
         order.delete()
         room.delete()
         return Response({'message': 'Клиент оплатил товар'},
-                        status=status.HTTP_204_NO_CONTENT
-                        )
+                        status=status.HTTP_204_NO_CONTENT)
 
 
 class OrderRoomConnectApi(RetrieveAPIView):
@@ -292,7 +293,9 @@ class OrderRoomConnectApi(RetrieveAPIView):
         order_room = RoomOrder.objects.filter(
             participants__user__username__icontains=username
         ).first()
-        return Response({'message': order_room.id}, status=status.HTTP_200_OK)
+        if order_room is not None:
+            return Response({'message': order_room.id}, status=status.HTTP_200_OK)
+        return Response({'message': 'Текущих комнат нет'})
 
 
 class OrderSuccessApi(CreateAPIView):
@@ -319,7 +322,7 @@ class OrderSuccessApi(CreateAPIView):
                 'purchase_type': request.data.get('purchase_type'),
             }
             shop = Shop.objects.first()
-            if shop._working():
+            if shop.is_working():
                 if request.data.get('purchase_type') == "Самовывоз":
                     order = Order.objects.create(**data)
                     order.save()

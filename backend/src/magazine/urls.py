@@ -1,19 +1,18 @@
-from django.urls import (path,
-                         re_path)
-from .views import (ProductsApi,
-                    TypeProductsApi,
-                    ProductDetailApi,
-                    CartItemApi,
-                    CartApi,
-                    DeleteItemApi,
-                    UpdateCartItemApi,
-                    OrderSuccessApi,
-                    LocationList,
-                    LocationDetail,
-                    OrderRoomApi,
-                    ProfileApi,
-                    OrderRoomConnectApi,
-                    )
+from django.urls import (path)
+from .api.views import (ProductsApi,
+                        TypeProductsApi,
+                        ProductDetailApi,
+                        CartItemApi,
+                        CartApi,
+                        DeleteItemApi,
+                        UpdateCartItemApi,
+                        OrderSuccessApi,
+                        LocationList,
+                        LocationDetail,
+                        OrderRoomApi,
+                        ProfileApi,
+                        OrderRoomConnectApi,
+                        )
 
 
 app_name = "magazine"

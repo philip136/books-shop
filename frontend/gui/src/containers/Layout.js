@@ -1,5 +1,5 @@
 import React from 'react';
-import { Layout, Menu, Breadcrumb, message } from 'antd';
+import { Layout, Menu, Breadcrumb, message, notification } from 'antd';
 import {CarOutlined, UserOutlined,ShoppingCartOutlined,} from '@ant-design/icons';
 import { Link, withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
@@ -7,18 +7,31 @@ import * as actions from '../store/actions/auth';
 import * as locationActions from '../store/actions/orderRoom';
 import { roomUrl } from '../constants';
 import { authAxios } from '../utils';
+import { SmileOutlined } from '@ant-design/icons';
 
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
+
+const openNotification = (description) => {
+    notification.open({
+        message: 'Оповещение',
+        description: description,
+        icon: <SmileOutlined style={{ color: '#108ee9' }} />,
+    });
+}
 
 
 const roomIdIsExist = (props) => {
     authAxios
         .post(roomUrl, {username: props.username})
         .then(res => {
-            props.history.push(`/map/${res.data.message}/`);
-            props.getUserRoom(res.data.message);
+            if (typeof(res.data.message) === "string"){
+                openNotification(res.data.message);
+            } else{
+                props.history.push(`/map/${res.data.message}/`);
+                props.getUserRoom(res.data.message);
+            }
         })
         .catch(err => {
             message.error(err);

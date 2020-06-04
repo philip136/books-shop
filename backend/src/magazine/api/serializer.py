@@ -4,15 +4,15 @@ from allauth.utils import email_address_exists
 from allauth.account.adapter import get_adapter
 from allauth.account.utils import setup_user_email
 from django.utils.translation import ugettext_lazy as _
-from .models import (Product,
-                     Cart,
-                     CartItem,
-                     Order,
-                     TypeProduct,
-                     Profile,
-                     Location,
-                     Shop,
-                     RoomOrder)
+from magazine.models import (Product,
+                             Cart,
+                             CartItem,
+                             Order,
+                             TypeProduct,
+                             Profile,
+                             Location,
+                             Shop,
+                             RoomOrder)
 from django.contrib.auth.models import User
 import datetime
 import re
