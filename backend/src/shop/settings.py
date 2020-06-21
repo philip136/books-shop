@@ -108,7 +108,7 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'tpyqiygo',
+        'NAME': 'postgres',
         'USER': 'postgres',
         'PASSWORD': 'admin',
         'HOST': '127.0.0.1',

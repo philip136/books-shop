@@ -45,6 +45,26 @@ class Product(models.Model):
         self.count = new_count
 
 
+class Profile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    busy = models.BooleanField(default=False)
+
+    class Meta:
+        verbose_name = "Профиль"
+        verbose_name_plural = "Профили"
+
+    def __str__(self):
+        return self.user.username
+
+    @property
+    def get_busy(self):
+        return self.busy
+
+    @get_busy.setter
+    def get_busy(self, state):
+        self.busy = state
+
+
 class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     count = models.PositiveIntegerField(default=1)
@@ -59,7 +79,7 @@ class CartItem(models.Model):
     
 
 class Cart(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    owner = models.ForeignKey(Profile, on_delete=models.CASCADE)
     products = models.ManyToManyField(CartItem)
     cart_total = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
 
@@ -68,25 +88,30 @@ class Cart(models.Model):
         verbose_name_plural = "Корзины"
     
     def __str__(self):
-        return f'Корзина пользователя {self.owner.username}'
+        return f'Корзина пользователя {self.owner.user.username}'
 
-    def add_to_cart(self, cart_item, owner):
-        cart_item = CartItem.objects.get(id=cart_item.id)
-        cart_owner = Cart.objects.get(owner=owner)
-        if cart_item not in cart_owner.products.all():
+    def add_to_cart(self, cart_item, cart):
+        if cart_item not in cart.products.all():
             self.products.add(cart_item)
             self.save()
+        new_cart_total = 0.00
+        for item in cart.products.all():
+            new_cart_total += float(item.product_total)
+        cart.cart_total = new_cart_total
+        cart.save()
 
-    def remove_from_cart(self, product, cart_item_id):
-        for _item in self.products.all():
-            if _item.product == product:
-                self.products.remove(_item)
-                product.count += _item.count
+    def remove_from_cart(self, product):
+        for item in self.products.all():
+            if item.product == product:
+                self.products.remove(item)
+                product.count += item.count
                 product.save()
-                self.cart_total -= _item.product_total
+                self.cart_total -= item.product_total
                 self.save()
     
     def change_from_cart(self, count, cart_item):
+        difference = cart_item.count - int(count)
+        cart_item.product.count += difference
         cart_item.count = int(count)
         cart_item.product_total = int(count) * Decimal(cart_item.product.price)
         cart_item.save()
@@ -107,26 +132,6 @@ ORDER_TYPE_OF_PURCHASE = [
     ("Доставка курьером", "Доставка курьером"),
     ("Самовывоз", "Самовывоз"),
 ]
-
-
-class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    busy = models.BooleanField(default=False)
-
-    class Meta:
-        verbose_name = "Профиль"
-        verbose_name_plural = "Профили"
-
-    def __str__(self):
-        return self.user.username
-
-    @property
-    def get_busy(self):
-        return self.busy
-
-    @get_busy.setter
-    def get_busy(self, state):
-        self.busy = state
 
 
 class Location(models.Model):
@@ -208,7 +213,7 @@ class Order(models.Model):
         verbose_name_plural = "Заказы"
 
     def __str__(self):
-        return f"Заказ номер {self.id}"
+        return f"Заказ номер {self.user.user.username}"
 
     def search_free_driver(self):
         profile_drivers = Profile.objects.filter(
