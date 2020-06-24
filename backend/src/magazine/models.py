@@ -41,7 +41,7 @@ class Product(models.Model):
         return self.count
     
     @get_count.setter
-    def set_count(self, new_count):
+    def get_count(self, new_count):
         self.count = new_count
 
 
@@ -106,7 +106,7 @@ class Cart(models.Model):
                 self.products.remove(item)
                 product.count += item.count
                 product.save()
-                self.cart_total -= item.product_total
+                self.cart_total -= float(item.product_total)
                 self.save()
     
     def change_from_cart(self, count, cart_item):
@@ -153,9 +153,17 @@ class Location(models.Model):
     def longitude(self):
         return self.point[0]
 
+    @longitude.setter
+    def longitude(self, new_longitude):
+        self.point[0] = new_longitude
+
     @property
     def latitude(self):
         return self.point[1]
+
+    @latitude.setter
+    def latitude(self, new_latitude):
+        self.point[1] = new_latitude
 
 
 class Shop(models.Model):
@@ -216,11 +224,12 @@ class Order(models.Model):
         return f"Заказ номер {self.user.user.username}"
 
     def search_free_driver(self):
-        profile_drivers = Profile.objects.filter(
+        profile_driver = Profile.objects.filter(
             busy=False,
+            user__is_active=True,
             user__is_staff=True
         ).first()
-        return profile_drivers
+        return profile_driver
 
     @property
     def check_status(self):

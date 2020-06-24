@@ -56,7 +56,8 @@ def operations_with_cart(operation: str):
         """
         def wrapper_for_update_create_delete(request, *args, **kwargs):
             user: User = request.user
-            cart: Cart = Cart.objects.filter(owner=user)
+            profile: Profile = Profile.objects.get(user=user)
+            cart: Cart = Cart.objects.filter(owner=profile)
             if cart.exists() == False:
                 cart: Cart = Cart.objects.create(
                     owner=user
