@@ -64,7 +64,7 @@ class RegisterSerializer(serializers.Serializer):
 
 
 class TypeProductSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
+    image = serializers.ImageField(max_length=None, use_url=True)
 
     class Meta:
         model = Product
@@ -78,13 +78,11 @@ class TypeProductSerializer(serializers.ModelSerializer):
             'type',
         ]
 
-    def get_image(self, obj):
-        request = self.context.get('request')
-        image_url = obj.image.url
-        return request.build_absolute_uri(image_url)
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(max_length=None, use_url=True)
+    
     class Meta:
         model = Product
         fields = [

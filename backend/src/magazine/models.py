@@ -24,7 +24,7 @@ class Product(models.Model):
     delivery_time = models.DateField()
     count = models.IntegerField()
     type = models.ForeignKey(TypeProduct, on_delete=models.CASCADE)
-    image = ImageField(upload_to='uploads')
+    image = ImageField(upload_to='uploads', default='uploads/default.png')
 
     class Meta:
         verbose_name = "Продукт"

@@ -48,11 +48,9 @@ class TypeProductsApi(RetrieveAPIView):
     serializer_class = TypeProductSerializer
     permission_classes = (AllowAny,)
 
-    @method_decorator(cache_page(86400))
     def get(self, request: HttpRequest, *args, **kwargs) -> Response:
         products: list = [product for product in self.get_queryset().iterator()]
-        return Response(self.serializer_class(products, many=True,
-                        context={'request': request}).data)
+        return Response(self.serializer_class(products, many=True).data)
 
     def get_queryset(self):
         type_name: str = self.kwargs.get('type')
