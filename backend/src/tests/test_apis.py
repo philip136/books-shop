@@ -7,6 +7,11 @@ from magazine.models import (TypeProduct,
                             Profile,
                             Order,
                             )
+from rest_framework.test import (APIClient,
+                                APITestCase)
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
+from rest_framework import status
 from magazine.api.serializer import (TypeProductSerializer,
                                     ProductSerializer,
                                     CartItemSerializer,
@@ -30,10 +35,6 @@ client = Client()
 
 
 class TestTypeProductApi(TestCase):
-    """
-    Test TypeProduct api
-    """
-
     def setUp(self):
         path_to_image = os.getcwd() + '/media/uploads/'
         image = os.listdir(path=path_to_image)
@@ -94,10 +95,6 @@ class TestTypeProductApi(TestCase):
 
 
 class TestProductApi(TestCase):
-    """
-    Test Product api
-    """
-
     def setUp(self):
         path_to_image = os.getcwd() + '/media/uploads/'
         image = os.listdir(path=path_to_image)
@@ -131,10 +128,6 @@ class TestProductApi(TestCase):
 
 
 class TestProductDetailApi(TestCase):
-    """
-    Test Product Detail api
-    """
-
     def setUp(self):
         path_to_image = os.getcwd() + '/media/uploads/'
         image = os.listdir(path=path_to_image)
@@ -159,10 +152,6 @@ class TestProductDetailApi(TestCase):
 
 
 class TestCartApi(TestCase):
-    """
-    Test Cart api
-    """
-
     def setUp(self):
         path_to_image = os.getcwd() + '/media/uploads/'
         image = os.listdir(path=path_to_image)
@@ -197,10 +186,6 @@ class TestCartApi(TestCase):
 
 
 class TestProfileApi(TestCase):
-    """
-    Test Profile api
-    """
-
     def setUp(self):
         self.user = User.objects.create_user(username='test')
         self.profile = Profile.objects.create(user=self.user)
@@ -211,6 +196,133 @@ class TestProfileApi(TestCase):
         serializer = ProfileSerializer(self.profile)
         assert response.data != serializer.data
         assert len(response.data) + 2 == len(serializer.data)
+
+
+class TestCartItemApi(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.username = 'te_test_1'
+        self.password = 'test12345'
+        self.user = User.objects.create(
+            username=self.username,
+            password=self.password,
+            email='test_testovski@gmail.com'
+        )
+        self.profile = Profile.objects.create(user=self.user)
+        self.token = Token.objects.create(user=self.user)
+       
+        path_to_image = os.getcwd() + '/media/uploads/'
+        image = os.listdir(path=path_to_image)
+        self.type_book = TypeProduct.objects.create(type='book')
+        self.book1 = Product.objects.create(
+            name='test_book1',
+            price=Decimal(10.00),
+            delivery_time=datetime.now().date(),
+            count=10,
+            image=image[0],
+            type=self.type_book,
+        )
+        self.item = CartItem.objects.create(product=self.book1,count=1)
+        self.api_authentication()
+
+    def api_authentication(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+
+    def test_login_user(self):
+        self.client.login(username=self.username, password=self.password)
+
+    def test_post_cart_item_in_cart(self):
+        url = reverse("magazine:cart-item", kwargs={"pk": 1})
+        serializer_data = CartItemSerializer(self.item).data
+        response = self.client.post(url, serializer_data)
+        assert response.status_code == status.HTTP_201_CREATED
+        cart_created = Cart.objects.get(owner=self.profile)
+        cart_add_item = len(cart_created.products.all())
+        cart_total = cart_created.cart_total
+        assert cart_created is not None
+        assert cart_add_item == 1
+        assert cart_total == self.item.product_total
+
+
+class TestUpdateCartItemApi(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.username = 'te_test_1'
+        self.password = 'test12345'
+        self.user = User.objects.create(
+            username=self.username,
+            password=self.password,
+            email='test_testovski@gmail.com'
+        )
+        self.token = Token.objects.create(user=self.user)
+        self.profile = Profile.objects.create(user=self.user)
+        path_to_image = os.getcwd() + '/media/uploads/'
+        image = os.listdir(path=path_to_image)
+        self.type_book = TypeProduct.objects.create(type='book')
+        self.book1 = Product.objects.create(
+            name='test_book1',
+            price=Decimal(10.00),
+            delivery_time=datetime.now().date(),
+            count=10,
+            image=image[0],
+            type=self.type_book,
+        )
+        self.item = CartItem.objects.create(product=self.book1,count=1)
+        self.cart = Cart.objects.create(owner=self.profile)
+        self.cart.products.add(self.item)
+        self.api_authentication()
+    
+    def api_authentication(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+
+    def test_put_cart_item_in_cart(self):
+        url = reverse("magazine:update-item", kwargs={"pk":1})
+        item_changed = CartItem.objects.create(product=self.book1,count=3)
+        serializer_data = CartItemSerializer(item_changed).data
+        response = self.client.put(url, serializer_data)
+        assert response.status_code == status.HTTP_201_CREATED
+        assert item_changed.count  == self.item.count + 2
+
+    
+class TestDeleteItemApi(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.username = 'te_test_1'
+        self.password = 'test12345'
+        self.user = User.objects.create(
+            username=self.username,
+            password=self.password,
+            email='test_testovski@gmail.com'
+        )
+        self.token = Token.objects.create(user=self.user)
+        self.profile = Profile.objects.create(user=self.user)
+        path_to_image = os.getcwd() + '/media/uploads/'
+        image = os.listdir(path=path_to_image)
+        self.type_book = TypeProduct.objects.create(type='book')
+        self.book1 = Product.objects.create(
+            name='test_book1',
+            price=Decimal(10.00),
+            delivery_time=datetime.now().date(),
+            count=10,
+            image=image[0],
+            type=self.type_book,
+        )
+        self.item = CartItem.objects.create(product=self.book1,count=1)
+        self.cart = Cart.objects.create(owner=self.profile)
+        self.cart.products.add(self.item)
+        self.api_authentication()
+
+    def api_authentication(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+    
+    def test_delete_item_from_cart(self):
+        url = reverse("magazine:delete-item", kwargs={"pk": self.item.id})
+        response = self.client.delete(url, {"pk": self.item.id})
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert len(self.cart.products.all()) == 0
+
+
+
 
 
 

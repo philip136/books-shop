@@ -106,7 +106,7 @@ class Cart(models.Model):
                 self.products.remove(item)
                 product.count += item.count
                 product.save()
-                self.cart_total -= float(item.product_total)
+                self.cart_total -= Decimal(item.product_total)
                 self.save()
     
     def change_from_cart(self, count, cart_item):

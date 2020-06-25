@@ -57,21 +57,21 @@ def operations_with_cart(operation: str):
         def wrapper_for_update_create_delete(request, *args, **kwargs):
             user: User = request.user
             profile: Profile = Profile.objects.get(user=user)
-            cart: Cart = Cart.objects.filter(owner=profile)
-            if cart.exists() == False:
+            cart: Cart = Cart.objects.filter(owner=profile).first()
+            if cart is None:
                 cart: Cart = Cart.objects.create(
-                    owner=user
+                    owner=profile
                 )
                 cart.save()
 
             if request.method == "POST" or request.method == "PUT":
                 product: Product = Product.objects.get(name=request.data.get('product_name'))
                 count: int = request.data.get('count')
-                item_exist(product, count, cart.first(), operation)
+                item_exist(product, count, cart, operation)
 
             if request.method == "DELETE":
                 item: CartItem = CartItem.objects.get(pk=kwargs.get('pk'))
-                operation_with_cart(cart.first(), item, operation)
+                operation_with_cart(cart, item, operation)
 
             return function(request)
         return wrapper_for_update_create_delete
