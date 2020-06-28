@@ -82,6 +82,7 @@ class TypeProductSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(max_length=None, use_url=True)
+    price = serializers.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     
     class Meta:
         model = Product
@@ -99,7 +100,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name')
     count = serializers.IntegerField()
-    product_total = serializers.DecimalField(max_digits=9, decimal_places=2, default=00.00)
+    product_total = serializers.DecimalField(max_digits=9, decimal_places=2, default=0.00)
 
     class Meta:
         model = CartItem
@@ -120,21 +121,7 @@ class CartItemSerializer(serializers.ModelSerializer):
         return count
 
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = [
-            'is_superuser',
-            'username',
-            'first_name',
-            'last_name',
-            'is_active'
-        ]
-
-
 class ProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
-
     class Meta:
         model = Profile
         fields = [
@@ -151,21 +138,32 @@ class ProfileSerializer(serializers.ModelSerializer):
         return data
 
 
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            'is_superuser',
+            'username',
+            'first_name',
+            'last_name',
+            'is_active'
+        ]
+
+
+
 class LocationSerializer(serializers.ModelSerializer):
-    profile = serializers.SerializerMethodField('_profile')
+    latitude = serializers.FloatField()
+    longitude = serializers.FloatField()
 
     class Meta:
         model = Location
         fields = [
             'profile',
-            'point',
             'latitude',
             'longitude',
         ]
-        read_only_fields = ['id', 'title', 'profile']
+        read_only_fields = ['id', 'title', 'profile',]
 
-    def _profile(self, obj):
-        return ProfileSerializer(obj.profile).data
 
 
 
@@ -209,34 +207,19 @@ class ShopSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    user = serializers.CharField(source='user.username')
-    items = serializers.SerializerMethodField('_items')
+    user=serializers.CharField(source='user.user.username')
     date = serializers.SerializerMethodField('_date')
     phone = serializers.CharField(max_length=13)
     first_name = serializers.CharField(max_length=30)
     last_name = serializers.CharField(max_length=30)
 
-    def to_representation(self, instance):
-        data = super(OrderSerializer, self).to_representation(instance)
-        data.update({
-            "user": Profile.objects.get(user__username=data.get('user'))
-        })
-        return data
-
     def _date(self, obj):
         return datetime.date.today()
-
-    def _items(self, obj):
-        data = self.get_initial()
-        owner = Profile.objects.get(user__username=data.get('user'))
-        cart = Cart.objects.get(owner=owner)
-        return cart
 
     class Meta:
         model = Order
         fields = [
             'user',
-            'items',
             'first_name',
             'last_name',
             'phone',
@@ -244,7 +227,7 @@ class OrderSerializer(serializers.ModelSerializer):
             'purchase_type',
             'status',
         ]
-        read_only_fields = ['date', 'status', 'items', ]
+        read_only_fields = ['date', 'status', ]
 
     def validate_phone(self, phone):
         result = re.match(r'^\+375(17|29|33|44)[0-9]{3}[0-9]{2}[0-9]{2}$', phone)

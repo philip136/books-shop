@@ -82,7 +82,7 @@ class TestMagazineAppUrls(TestCase):
         assert resolve(url).func.view_class == CartItemApi
 
     def test_cart_url(self):
-        url = reverse("magazine:my-cart")
+        url = reverse("magazine:my-cart", args=['test'])
         assert resolve(url).func.view_class == CartApi
 
     def test_cart_item_delete_url(self):

@@ -91,13 +91,14 @@ class Cart(models.Model):
         return f'Корзина пользователя {self.owner.user.username}'
 
     def add_to_cart(self, cart_item, cart):
+        
         if cart_item not in cart.products.all():
-            self.products.add(cart_item)
-            self.save()
-        new_cart_total = 0.00
+            cart.products.add(cart_item)
+            cart.save()
         for item in cart.products.all():
-            new_cart_total += float(item.product_total)
-        cart.cart_total = new_cart_total
+            print(cart.cart_total)
+            print(item.product_total)
+            cart.cart_total += Decimal(item.product_total)
         cart.save()
 
     def remove_from_cart(self, product):
@@ -106,19 +107,17 @@ class Cart(models.Model):
                 self.products.remove(item)
                 product.count += item.count
                 product.save()
-                self.cart_total -= Decimal(item.product_total)
+                self.cart_total -= item.product_total
                 self.save()
     
     def change_from_cart(self, count, cart_item):
         difference = cart_item.count - int(count)
         cart_item.product.count += difference
         cart_item.count = int(count)
-        cart_item.product_total = int(count) * Decimal(cart_item.product.price)
+        cart_item.product_total = int(count) * cart_item.product.price
         cart_item.save()
-        new_cart_total = 0.00
         for item in self.products.all():
-            new_cart_total += float(item.product_total)
-        self.cart_total = new_cart_total
+            self.cart_total += item.product_total
         self.save()
 
 
@@ -202,7 +201,7 @@ class RoomOrder(models.Model):
         verbose_name_plural = "Комнаты клиент-курьер"
 
     def __str__(self):
-        return f"Комната {self.id}"
+        return f"Комната №{self.id}"
 
 
 class Order(models.Model):
@@ -221,7 +220,7 @@ class Order(models.Model):
         verbose_name_plural = "Заказы"
 
     def __str__(self):
-        return f"Заказ номер {self.user.user.username}"
+        return f"Заказ {self.user.user.username}"
 
     def search_free_driver(self):
         profile_driver = Profile.objects.filter(

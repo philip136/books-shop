@@ -8,9 +8,9 @@ from magazine.models import (Product,
                             Order,
                             RoomOrder,
                             Shop)
+from django.utils import timezone
 from django.contrib.auth.models import User
 from decimal import Decimal
-from datetime import datetime
 import pytest
 
 
@@ -26,7 +26,7 @@ class TestProductModel(TestCase):
         self.product = Product.objects.create(
             name='test_product',
             price=Decimal(10.00),
-            delivery_time=datetime.now().date(),
+            delivery_time=timezone.now().date(),
             count=10,
             type=self.type
         )
@@ -81,7 +81,7 @@ class TestCartItemModel(TestCase):
         self.product = Product.objects.create(
             name='test_product',
             price=Decimal(10.00),
-            delivery_time=datetime.now().date(),
+            delivery_time=timezone.now().date(),
             count=10,
             type=self.type
         )
@@ -108,7 +108,7 @@ class TestCartModel(TestCase):
         self.product = Product.objects.create(
             name='test_product',
             price=Decimal(10.00),
-            delivery_time=datetime.now().date(),
+            delivery_time=timezone.now().date(),
             count=10,
             type=self.type
         )
@@ -116,7 +116,7 @@ class TestCartModel(TestCase):
         self.cart_item = CartItem.objects.create(
             product=self.product,
             count=1,
-            product_total=self.product.price
+            product_total=Decimal(10.00)
         )
     
         self.user = User.objects.create_user(username='test_user')
@@ -125,7 +125,8 @@ class TestCartModel(TestCase):
             busy=False
         )
         self.cart = Cart.objects.create(
-            owner=self.profile
+            owner=self.profile,
+            cart_total=Decimal(0.00)
         )
         self.cart.products.add(self.cart_item)
 
@@ -139,14 +140,14 @@ class TestCartModel(TestCase):
         product = Product.objects.create(
             name='test_product_2',
             price=Decimal(15.00),
-            delivery_time=datetime.now().date(),
+            delivery_time=timezone.now().date(),
             count=10,
             type=self.type
         )
         cart_item = CartItem.objects.create(
             product=product,
             count=1,
-            product_total=product.price
+            product_total=15.00
         )
         self.cart.add_to_cart(cart_item, self.cart)
         assert len(self.cart.products.all()) == 2
@@ -165,11 +166,11 @@ class TestCartModel(TestCase):
 
     def test_remove_from_cart(self):
         count_products = len(self.cart.products.all())
-        total_price = Decimal(self.cart.cart_total)
+        total_price = self.cart.cart_total
         self.cart.remove_from_cart(self.product)
         count_products_after = len(self.cart.products.all())
         assert count_products == count_products_after + 1
-        assert total_price == Decimal(0.00)
+        assert total_price == 0.00
 
     def test_change_from_cart(self):
         item = self.cart.products.first()
@@ -231,7 +232,7 @@ class TestShopModel(TestCase):
         self.shop.personal.add(self.profile)
 
     def test_shop_is_working_now(self):
-        hour_now = datetime.now().hour
+        hour_now = timezone.now().hour
         if hour_now < 22:
             assert self.shop.is_working() == True
         else:
@@ -250,7 +251,7 @@ class TestOrderModel(TestCase):
         self.product = Product.objects.create(
             name='test_product',
             price=Decimal(10.00),
-            delivery_time=datetime.now().date(),
+            delivery_time=timezone.now().date(),
             count=10,
             type=self.type
         )

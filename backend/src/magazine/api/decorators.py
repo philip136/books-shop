@@ -42,7 +42,7 @@ def item_exist(product: Product, count: int, cart: Cart, operation: str):
         item: CartItem = CartItem.objects.create(
             product=product,
             count=count,
-            product_total=Decimal(product_total)
+            product_total=product_total
         )
         item.save()
     operation_with_cart(cart, item.first(), operation, count=count)
@@ -59,9 +59,7 @@ def operations_with_cart(operation: str):
             profile: Profile = Profile.objects.get(user=user)
             cart: Cart = Cart.objects.filter(owner=profile).first()
             if cart is None:
-                cart: Cart = Cart.objects.create(
-                    owner=profile
-                )
+                cart: Cart = Cart.objects.create(owner=profile,cart_total=Decimal(0.00))
                 cart.save()
 
             if request.method == "POST" or request.method == "PUT":

@@ -12,6 +12,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from django.contrib.gis.geos import (GEOSGeometry,fromstr)
 from django.http import HttpRequest
+from rest_framework.views import APIView
 from rest_framework.generics import (ListAPIView,
                                      RetrieveAPIView,
                                      DestroyAPIView,
@@ -87,20 +88,26 @@ _REMOVE_FROM_CART = "remove_from_cart"
 _CHANGE_FROM_CART = "change_from_cart"
 
 
-class CartApi(ListAPIView):
+class CartApi(RetrieveAPIView):
     """
     Api for show a cart 
     """
     serializer_class = CartSerializer
     permission_classes = (IsAuthenticated,)
+    lookup_field = 'username'
 
     def get_queryset(self):
         user: User = self.request.user
-        cart: Union[Cart, None] = Cart.objects.filter(owner=user).first()
+        profile: Profile = Profile.objects.get(user=user)
+        cart: Union[Cart, None] = Cart.objects.filter(owner=profile).first()
         if cart is None:
-            cart: Cart = Cart.objects.create(owner=user)
+            cart: Cart = Cart.objects.create(owner=profile)
             cart.save()
         return cart
+
+    def get(self, request, *args, **kwargs):
+        serializer = self.serializer_class(self.get_queryset())
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 
@@ -174,19 +181,25 @@ class LocationDetail(RetrieveUpdateDestroyAPIView):
         Setup position for users on React map
         """
         user: User = request.user
-        point: list = request.data.get('point').split(' ')
-        profile: Profile = Profile.objects.filter(profile__user=user)
-        if profile.location is None:
+        coords_data = kwargs['serializer_data']
+        profile: Profile = Profile.objects.get(user=user)
+        location: Location = Location.objects.filter(profile=profile).first()
+        if location is None:
             location = Location.objects.create(
-                point=fromstr("POINT%s %s" % (point[1], point[2]), srid=4326)
+                title=f'Текущая позиция {user.username}',
+                profile=profile,
+                point=fromstr(
+                    "POINT%s %s" % (coords_data['latitude'], coords_data['longitude']),
+                     srid=4326
+                )
             )
             location.save()
-
-        profile: Profile = Profile.objects.get(user=user)
-        profile.location = location
-        return Response({
-            'current_position': profile.location
-        }, status=status.HTTP_201_CREATED)
+        else:
+            location.latitude = coords_data['latitude']
+            location.longitude = coords_data['longitude']
+            location.save()
+        return Response({"message": "Текущее местоположение изменено"},
+                        status=status.HTTP_200_OK)
 
         
 
@@ -283,16 +296,21 @@ class OrderSuccessApi(CreateAPIView):
 
     @method_decorator([serializer_validate(serializer_class, None)])
     def post(self, request, *args, **kwargs):
-        customer: Profile = Profile.objects.get(user__username=request.user)
+        customer: Profile = Profile.objects.get(user=request.user)
         shop: Shop = Shop.objects.first()
         order_data: dict = kwargs['serializer_data']
-
+        cart: Cart = Cart.objects.get(owner=customer)
+        order_data.update({
+            'user': customer,
+            'items': cart
+        })
+        
         if shop.is_working():
             delivery_type: str = order_data.get('purchase_type')
             self.operations_with_room(shop, delivery_type, order_data, customer)
-            return Response({"Комната успешно создана"}, status=status.HTTP_200_OK)
+            return Response({"message":"Комната успешно создана"}, status=status.HTTP_200_OK)
         else:
-            return Response({'message': "Простите но наш магазин уже закрыт, "
+            return Response({"message": "Простите но наш магазин уже закрыт, "
                         "обратитесь позже мы работаем с 9:00 - 22:00 каждый день"}, 
                         status=status.HTTP_200_OK)
 

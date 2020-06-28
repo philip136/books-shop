@@ -6,6 +6,9 @@ from magazine.models import (TypeProduct,
                             Cart,
                             Profile,
                             Order,
+                            Location,
+                            Shop,
+                            RoomOrder
                             )
 from rest_framework.test import (APIClient,
                                 APITestCase)
@@ -20,12 +23,14 @@ from magazine.api.serializer import (TypeProductSerializer,
                                     LocationSerializer,
                                     OrderRoomSerializer,
                                     ShopSerializer,
-                                    OrderSerializer)
+                                    OrderSerializer,
+                                    LocationSerializer)
 from django.urls import reverse
 from datetime import datetime
 from decimal import Decimal
 from django.contrib.auth.models import User
 from PIL import Image
+import random
 import json
 import pytest
 import os
@@ -177,7 +182,7 @@ class TestCartApi(TestCase):
         self.cart.products.add(self.item)
 
     def test_get_cart(self):
-        url = reverse("magazine:my-cart")
+        url = reverse("magazine:my-cart", args=[self.user.username])
         response = client.get(url)
         serializer = CartSerializer(self.cart)
         assert serializer.data != response.data
@@ -301,7 +306,7 @@ class TestDeleteItemApi(APITestCase):
         self.type_book = TypeProduct.objects.create(type='book')
         self.book1 = Product.objects.create(
             name='test_book1',
-            price=Decimal(10.00),
+            price=10.00,
             delivery_time=datetime.now().date(),
             count=10,
             image=image[0],
@@ -321,11 +326,248 @@ class TestDeleteItemApi(APITestCase):
         assert response.status_code == status.HTTP_204_NO_CONTENT
         assert len(self.cart.products.all()) == 0
 
-
-
-
-
-
     
+class TestLocationAPI(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.username = 'te_test_1'
+        self.password = 'test12345'
+        self.user = User.objects.create(
+            username=self.username,
+            password=self.password,
+            email='test_testovski@gmail.com'
+        )
+        self.token = Token.objects.create(user=self.user)
+        self.profile = Profile.objects.create(user=self.user)
+        self.location = Location.objects.create(title=f'{self.username}',profile=self.profile)
+        self.api_authentication()
+
+    def api_authentication(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+
+    def test_location_is_created(self):
+        assert self.location is not None
+
+    def test_detail_location(self):
+        url = reverse("magazine:location-detail", kwargs={"pk": 1})
+        self.location_another = Location.objects.create(
+            title=f'{self.username}',
+            profile=self.profile
+            )
+        first_data_location = LocationSerializer(self.location).data
+        second_data_location = LocationSerializer(self.location_another).data
+        assert  first_data_location == second_data_location
+        self.location_another.latitude = 10
+        self.location_another.longitude = 10
+
+        serializer_data = LocationSerializer(self.location_another).data
+        response = self.client.put(url, serializer_data, format='json')
+        assert response.status_code == 200
+        assert second_data_location['latitude'] != serializer_data['latitude']
+        assert second_data_location['longitude'] != serializer_data['longitude']
+
+    def test_locations_list(self):
+        self.location_2 = Location.objects.create(
+            title=f'{self.username}',
+            profile=self.profile
+        )
+        url = reverse("magazine:location-list")
+        response = self.client.get(url)
+        assert response.status_code == 200
+
+
+class TestOrderAPI(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.username = 'te_test_1'
+        self.password = 'test12345'
+        self.user = User.objects.create(
+            username=self.username,
+            password=self.password,
+            email='test_testovski@gmail.com'
+        )
+        self.token = Token.objects.create(user=self.user)
+        self.profile = Profile.objects.create(user=self.user)
+        username = 'te_test_2'
+        password = 'test12345'
+        shop_owner = User.objects.create(
+            username=username,
+            password=password,
+            email='test_testovski@gmail.com',
+            is_staff=True,
+            is_active=True
+        )
+        profile_of_owner = Profile.objects.create(user=shop_owner)
+        self.location = Location.objects.create(
+            title='current_pos Magazika',
+            profile=profile_of_owner)
+        self.location.latitude = 5
+        self.location.longitude = 10
+        self.shop = Shop.objects.create(
+            name='MAGAZIK',
+            position=self.location,
+        )
+        self.shop.personal.add(profile_of_owner)
+        self.api_authentication()
+
+    def api_authentication(self):
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+
+    def create_cart(self):
+        path_to_image = os.getcwd() + '/media/uploads/'
+        image = os.listdir(path=path_to_image)
+        type_book = TypeProduct.objects.create(type='book')
+        book1 = Product.objects.create(
+            name='test_book1',
+            price=Decimal(10.00),
+            delivery_time=datetime.now().date(),
+            count=10,
+            image=image[0],
+            type=type_book,
+        )
+        item = CartItem.objects.create(product=book1,count=1)
+        cart = Cart.objects.create(owner=self.profile)
+        cart.products.add(item)
+        return cart
+
+    def test_checkout_without_courier(self):
+        url = reverse("magazine:order-success")
+        cart = self.create_cart()
+        order = Order.objects.create(
+            user=self.profile,
+            items=cart,
+            first_name='Тест',
+            last_name='Тестовский',
+            phone='+375441239976',
+        )
+        serializer = OrderSerializer(order).data
+        response = self.client.post(url, serializer, format='json')
+        assert response.status_code == 200
+        is_working = self.shop.is_working()
+        if is_working:
+            assert response.data["message"] == "Комната успешно создана"
+        else:
+            assert response.data["message"] == ("Простите но наш магазин уже закрыт, "
+                        "обратитесь позже мы работаем с 9:00 - 22:00 каждый день")
+    
+    def test_checkout_with_courier(self):
+        url = reverse("magazine:order-success")
+        cart = self.create_cart()
+        order = Order.objects.create(
+            user=self.profile,
+            items=cart,
+            first_name='Тест',
+            last_name='Тестовский',
+            phone='+375441239976',
+            purchase_type="Доставка курьером"
+        )
+        serializer = OrderSerializer(order).data
+
+        response = self.client.post(url, serializer, format='json')
+        assert response.status_code == 200
+        is_working = self.shop.is_working()
+        if is_working:
+            assert response.data["message"] == "Комната успешно создана"
+        else:
+            assert response.data["message"] == ("Простите но наш магазин уже закрыт, "
+                        "обратитесь позже мы работаем с 9:00 - 22:00 каждый день")
+
+    def test_order_room_connect_if_room_does_not_exist(self):
+        url_room = reverse("magazine:connect-to-room")
+        cart = self.create_cart()
+        data = {"username": self.profile.user.username}
+        response_room = self.client.post(url_room, data, format='json')
+        assert response_room.data['message'] == 'Текущих комнат нет'
+
+    def test_order_room_connect_if_room_is_exist(self):
+        order_room = RoomOrder()
+        order_room.save()
+
+        order_room.participants.add(self.profile)
+        location = Location.objects.create(
+            title=f'current pos {self.username}',
+            profile=self.profile
+        )
+        order_room.locations.add(location)
+        url = reverse("magazine:order-room", args=[order_room.id])
+        response = self.client.get(url)
+        assert response.status_code == 200
+
+    def test_connect_as_courier(self):
+        order_room = RoomOrder()
+        order_room.save()
+
+        courier = User.objects.create(
+            username='test_courier',
+            password='test12345',
+            email='test_testovski@gmail.com',
+            is_staff=True,
+            is_active=True
+        )
+        p_courier = Profile.objects.create(user=courier)
+
+        order_room.participants.add(self.profile, p_courier)
+        location_customer = Location.objects.create(
+            title=f'current pos {self.username}',
+            profile=self.profile
+        )
+        location_courier = Location.objects.create(
+            title=f'current pos {courier.username}',
+            profile=p_courier
+        )
+        order_room.locations.add(location_customer, location_courier)
+        url = reverse("magazine:connect-to-room")
+        username = {"username": courier.username}
+        response = self.client.post(url, username)
+        assert response.status_code == 200
+        assert response.data["message"] == order_room.id
+
+    def test_validate_data_first_name(self):
+        url = reverse("magazine:order-success")
+        cart = self.create_cart()
+        order = Order.objects.create(
+            user=self.profile,
+            items=cart,
+            first_name='Test',
+            last_name='Тестовский',
+            phone='+375441239976',
+            purchase_type="Доставка курьером"
+        )
+        serializer = OrderSerializer(order).data
+        response = self.client.post(url, serializer, format='json')
+        assert response.data["message"] == "Проверьте правильность введенных данных"
+    
+    def test_validate_data_last_name(self):
+        url = reverse("magazine:order-success")
+        cart = self.create_cart()
+        order = Order.objects.create(
+            user=self.profile,
+            items=cart,
+            first_name='Тест',
+            last_name='Testovski',
+            phone='+375441239976',
+            purchase_type="Доставка курьером"
+        )
+        serializer = OrderSerializer(order).data
+        response = self.client.post(url, serializer, format='json')
+        assert response.data["message"] == "Проверьте правильность введенных данных"
+
+    def test_validate_data_mobile_phone(self):
+        url = reverse("magazine:order-success")
+        cart = self.create_cart()
+        order = Order.objects.create(
+            user=self.profile,
+            items=cart,
+            first_name='Test',
+            last_name='Тестовский',
+            phone='375441239976',
+            purchase_type="Доставка курьером"
+        )
+        serializer = OrderSerializer(order).data
+        response = self.client.post(url, serializer, format='json')
+        assert response.data["message"] == "Проверьте правильность введенных данных"
+
 
         
+        
+       
