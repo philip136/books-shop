@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models as models_gis
 import datetime
+import math
 
 
 class TypeProduct(models.Model):
@@ -91,34 +92,35 @@ class Cart(models.Model):
         return f'Корзина пользователя {self.owner.user.username}'
 
     def add_to_cart(self, cart_item, cart):
-        
         if cart_item not in cart.products.all():
             cart.products.add(cart_item)
+            cart.cart_total += cart_item.product_total
             cart.save()
-        for item in cart.products.all():
-            print(cart.cart_total)
-            print(item.product_total)
-            cart.cart_total += Decimal(item.product_total)
-        cart.save()
 
-    def remove_from_cart(self, product):
-        for item in self.products.all():
-            if item.product == product:
-                self.products.remove(item)
-                product.count += item.count
-                product.save()
-                self.cart_total -= item.product_total
-                self.save()
+    def remove_from_cart(self, product, cart):
+        for cart_item in cart.products.all():
+            if cart_item.product == product:
+                cart.products.remove(cart_item)
+                product.count += cart_item.count
+                product.save()  
+                cart.cart_total -= cart_item.product_total
+                cart_item.delete()
+                cart.save()
     
-    def change_from_cart(self, count, cart_item):
+    def change_from_cart(self, count, cart_item, cart):
         difference = cart_item.count - int(count)
+        if difference < 0:
+            difference = math.fabs(difference)  
         cart_item.product.count += difference
         cart_item.count = int(count)
         cart_item.product_total = int(count) * cart_item.product.price
         cart_item.save()
-        for item in self.products.all():
-            self.cart_total += item.product_total
-        self.save()
+
+        new_cart_total = Decimal(0.00)
+        for item in cart.products.all():
+            new_cart_total += item.product_total
+        cart.cart_total = new_cart_total
+        cart.save()
 
 
 ORDER_STATUS_CHOICES = [
@@ -134,9 +136,8 @@ ORDER_TYPE_OF_PURCHASE = [
 
 
 class Location(models.Model):
-    title = models.CharField(max_length=80, blank=True)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE,
-                                blank=True, null=True)
+    title = models.CharField(max_length=80)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     point = models_gis.PointField(default='POINT(0 0)', srid=4326)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -188,7 +189,8 @@ class Shop(models.Model):
 
 
 class RoomOrder(models.Model):
-    """ In room exist client and courier,
+    """
+    In room exist client and courier,
     they can sharing location between themselves
     """
     participants = models.ManyToManyField(
@@ -210,7 +212,7 @@ class Order(models.Model):
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     phone = models.CharField(max_length=13)
-    date = models.DateTimeField(default=datetime.datetime.today)
+    date = models.DateTimeField(default=datetime.datetime.today())
     purchase_type = models.CharField(max_length=30, choices=ORDER_TYPE_OF_PURCHASE, default="Самовывоз")
     status = models.CharField(max_length=30, choices=ORDER_STATUS_CHOICES, default="Принят к обработке")
     payment = models.BooleanField(default=False)

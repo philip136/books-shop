@@ -67,12 +67,6 @@ class ProductsApi(ListAPIView):
     serializer_class = ProductSerializer
     permission_classes = (AllowAny,)
 
-    @method_decorator(cache_page(86400))
-    def list(self, request: HttpRequest) -> Response:
-        queryset = self.get_queryset()
-        serializer = self.serializer_class(queryset, many=True)
-        return Response(serializer.data)
-
 
 class ProductDetailApi(RetrieveAPIView):
     """
@@ -122,7 +116,7 @@ class CartItemApi(RetrieveAPIView):
     @method_decorator([serializer_validate(serializer_class, None),
                     operations_with_cart(_ADD_TO_CART)])
     def post(self, request, *args, **kwargs):
-        return Response({"message": "Объект корзины успешно создан"},
+        return Response({"message": "Товар добавлен в вашу корзину"},
                         status=status.HTTP_201_CREATED)
 
 

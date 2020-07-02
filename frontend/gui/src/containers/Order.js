@@ -52,7 +52,7 @@ class OrderForm extends React.Component{
                 else {
                     localStorage.setItem('roomId', res.data.message['id']);
                     const roomId = localStorage.getItem('roomId');
-                    return this.props.history.push(`/map/${roomId}/`);
+                    this.props.history.push(`/map/${roomId}/`);
                 }
             })
             .catch(err => {
@@ -62,7 +62,6 @@ class OrderForm extends React.Component{
                     });
                 }
             })
-
     };
 
     render(){

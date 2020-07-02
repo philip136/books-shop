@@ -9,11 +9,11 @@ def item_in_cart(cart, item: CartItem) -> bool:
 def operation_with_cart(cart: Cart, item: CartItem, operation: str, **kwargs):
     if item_in_cart(cart, item):
         if operation == "remove_from_cart":
-            cart.remove_from_cart(item.product)
+            cart.remove_from_cart(item.product, cart)
 
-        if operation == "change_from_cart":
+        if operation == "change_from_cart" or operation == "add_to_cart":
             count = kwargs.get('count')
-            cart.change_from_cart(count, item)
+            cart.change_from_cart(count, item, cart)
     else: 
         if operation == "add_to_cart":
             cart.add_to_cart(item, cart)

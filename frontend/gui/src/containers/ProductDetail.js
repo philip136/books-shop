@@ -1,11 +1,9 @@
 import React from 'react';
 import axios from 'axios';
-import { Card,
-        Button,
+import {Button,
         Col,
         Row,
         Form,
-        Input,
         message,
         Spin,
         InputNumber,
@@ -13,9 +11,7 @@ import { Card,
 import { antIcon } from './Login';
 import { authAxios } from '../utils';
 import { productDetailUrl, addToCartUrl } from '../constants';
-import { withRouter } from 'react-router-dom';
 import { connect } from 'react-redux';
-import { fetchCart } from '../store/actions/cart';
 import { Redirect } from "react-router-dom";
 
 
@@ -24,7 +20,7 @@ class ProductDetail extends React.Component{
         loading: false,
         error: null,
         data: [],
-        formData: {}
+        count: {}
     };
 
     componentDidMount() {
@@ -49,34 +45,26 @@ class ProductDetail extends React.Component{
     handleAddToCart = (product) => {
         const id = this.props.match.params.productId;
         this.setState({ loading: true });
-        const {formData} = this.state;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
-        const count = formData['count'];
-        const product_name = product['name']
+        
         authAxios
-            .post(addToCartUrl(id), { product_name, count })
+            .post(addToCartUrl(id), { 
+                product_name: product.name,
+                count: this.state.count
+            })
             .then(res => {
-                this.setState({loading: false});
-                if (res.status === 200){
-                    message.warning(res.data['message']);
-                }
-                else {
-                    message.success(res.data['message']);
-                }
+                this.handleFetchItem()
+                message.success(res.data.message)    
             })
             .catch(err => {
                 this.setState({error: err});
                 message.error(err);
             });
-
     };
 
     handleChange = (value) => {
-        const {formData} = this.state;
-        const updatedFormData = {
-            ...formData,
-            ['count']: value
-        };
-        this.setState({formData: updatedFormData});
+        this.setState({
+            count: value
+        })
     };
 
     componentDidUpdate(prevProps, prevState){
@@ -93,7 +81,7 @@ class ProductDetail extends React.Component{
             return <Redirect to="/login/" />;
          }
 
-        const {loading, error, data} = this.state
+        const {loading, data} = this.state
         const item = data;
 
         return (

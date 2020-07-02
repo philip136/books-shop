@@ -32,13 +32,11 @@ export const withMyHook = (Component) =>{
 
 
 class NormalLoginForm extends React.Component{
-
   onFinish = (value) => {
     this.props.onAuth(value.username, value.password);
-    this.props.history.push('/');
   }
 
-  render(){
+  render(){ 
       if (this.props.token !== null){
         return (<Redirect to='/' />)
       }

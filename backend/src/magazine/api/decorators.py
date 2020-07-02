@@ -36,16 +36,16 @@ def item_exist(product: Product, count: int, cart: Cart, operation: str):
     """
     Check cart item is exist
     """
-    item: CartItem = CartItem.objects.filter(product=product)
+    item: CartItem = CartItem.objects.filter(product=product).first()
     product_total = product.get_price() * int(count)
-    if item.exists() == False:
+    if item is None:
         item: CartItem = CartItem.objects.create(
             product=product,
             count=count,
             product_total=product_total
         )
         item.save()
-    operation_with_cart(cart, item.first(), operation, count=count)
+    operation_with_cart(cart, item, operation, count=count)
 
 
 def operations_with_cart(operation: str):
