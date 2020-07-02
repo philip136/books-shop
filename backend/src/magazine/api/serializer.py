@@ -63,23 +63,8 @@ class RegisterSerializer(serializers.Serializer):
         return user
 
 
-class LocationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Location
-        fields = [
-            'id',
-            'title',
-            'profile',
-            'address',
-            'point',
-            'latitude',
-            'longitude',
-        ]
-        read_only_fields = ['id', 'title', 'description', 'address', ]
-
-
 class TypeProductSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
+    image = serializers.ImageField(max_length=None, use_url=True)
 
     class Meta:
         model = Product
@@ -93,13 +78,12 @@ class TypeProductSerializer(serializers.ModelSerializer):
             'type',
         ]
 
-    def get_image(self, obj):
-        request = self.context.get('request')
-        image_url = obj.image.url
-        return request.build_absolute_uri(image_url)
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    image = serializers.ImageField(max_length=None, use_url=True)
+    price = serializers.DecimalField(max_digits=5, decimal_places=2, default=0.00)
+    
     class Meta:
         model = Product
         fields = [
@@ -115,6 +99,8 @@ class ProductSerializer(serializers.ModelSerializer):
 
 class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name')
+    count = serializers.IntegerField()
+    product_total = serializers.DecimalField(max_digits=9, decimal_places=2, default=0.00)
 
     class Meta:
         model = CartItem
@@ -135,6 +121,23 @@ class CartItemSerializer(serializers.ModelSerializer):
         return count
 
 
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = [
+            'user',
+            'busy',
+        ]
+    
+    def to_representation(self, instance):
+        data = super(ProfileSerializer, self).to_representation(instance)
+        data.update({
+            'user': instance.user.username,
+            'is_staff': instance.user.is_staff
+        })
+        return data
+
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -147,21 +150,25 @@ class UserSerializer(serializers.ModelSerializer):
         ]
 
 
-class ProfileSerializer(serializers.ModelSerializer):
-    user = UserSerializer()
+
+class LocationSerializer(serializers.ModelSerializer):
+    latitude = serializers.FloatField()
+    longitude = serializers.FloatField()
 
     class Meta:
-        model = Profile
+        model = Location
         fields = [
-            'user',
-            'status_staff',
-            'payment',
-            'busy',
+            'profile',
+            'latitude',
+            'longitude',
         ]
+        read_only_fields = ['id', 'title', 'profile',]
+
+
 
 
 class CartSerializer(serializers.ModelSerializer):
-    owner = UserSerializer()
+    owner = ProfileSerializer()
 
     class Meta:
         model = Cart
@@ -200,9 +207,7 @@ class ShopSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    user = serializers.CharField(source='user.username')
-    items = serializers.SerializerMethodField('_items')
-    total_price = serializers.SerializerMethodField('_summary')
+    user=serializers.CharField(source='user.user.username')
     date = serializers.SerializerMethodField('_date')
     phone = serializers.CharField(max_length=13)
     first_name = serializers.CharField(max_length=30)
@@ -211,25 +216,10 @@ class OrderSerializer(serializers.ModelSerializer):
     def _date(self, obj):
         return datetime.date.today()
 
-    def _items(self, obj):
-        data = self.get_initial()
-        owner = User.objects.get(username=data.get('user'))
-        cart = Cart.objects.get(owner=owner)
-        return CartSerializer(cart).data
-
-    def _summary(self, obj):
-        data = self.get_initial()
-        owner = User.objects.get(username=data.get('user'))
-        cart = Cart.objects.get(owner=owner)
-        cart_total = cart.cart_total
-        return cart_total
-
     class Meta:
         model = Order
         fields = [
             'user',
-            'items',
-            'total_price',
             'first_name',
             'last_name',
             'phone',
@@ -237,28 +227,29 @@ class OrderSerializer(serializers.ModelSerializer):
             'purchase_type',
             'status',
         ]
+        read_only_fields = ['date', 'status', ]
 
     def validate_phone(self, phone):
         result = re.match(r'^\+375(17|29|33|44)[0-9]{3}[0-9]{2}[0-9]{2}$', phone)
         if result is None:
             raise serializers.ValidationError("Проверьте правильность введенного номера!"
                                               "Номер должен начинать с '+375' и его"
-                                              " длина не должна быть меньее 12 цифр")
-        return result
+                                              " длина не должна быть меньше 12 цифр")
+        return result.group(0)
 
     def validate_first_name(self, first_name):
         result = re.match(r'^[А-Яа-я]{2,30}$', first_name)
         if result is None:
             raise serializers.ValidationError("Имя должно содержать только буквы, "
                                               "и его длина не должна быть меньше 2")
-        return result
+        return result.group(0)
 
     def validate_last_name(self, last_name):
         result = re.match(r'^[А-Яа-я]{3,30}$', last_name)
         if result is None:
             raise serializers.ValidationError("Фамилия должна содержать только буквы, "
                                               "и ее длина не должна быть меньше 3")
-        return result
+        return result.group(0)
 
 
 

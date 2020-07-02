@@ -1,7 +1,7 @@
 from channels.routing import (ProtocolTypeRouter,
                               URLRouter)
 from channels.auth import AuthMiddlewareStack
-import magazine.wsocket.routing
+import magazine.wsocket.routing 
 
 application = ProtocolTypeRouter({
     'websocket': AuthMiddlewareStack(

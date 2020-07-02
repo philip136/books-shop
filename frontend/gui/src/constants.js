@@ -8,7 +8,7 @@ export const productListUrl = `${endpoint}products/`;
 export const productTypeUrl = slug => `${endpoint}products/type/${slug}/`;
 export const productDetailUrl = id => `${endpoint}products/${id}/`;
 export const addToCartUrl = id => `${endpoint}cart/${id}/`;
-export const myCartUrl = `${endpoint}cart/`;
+export const myCartUrl = username =>  `${endpoint}cart/${username}/`;
 export const deleteCartItemUrl = id => `${endpoint}cart/delete/${id}/`;
 export const updateCartItemUrl = id => `${endpoint}cart/update/${id}/`;
 export const orderUrl = `${endpoint}order/success/`;

@@ -22,7 +22,6 @@ django-google-maps==0.12.1
 django-phonenumbers==1.0.1
 django-rest-auth==0.9.5
 djangorestframework==3.11.0
-GDAL==2.4.2
 hiredis==1.0.1
 hyperlink==19.0.0
 idna==2.9

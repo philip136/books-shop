@@ -12,7 +12,6 @@ const antIcon = <LoadingOutlined style={{fontSize: 24}} />
 
 class CartList extends React.Component{
     state = {
-        data: [],
         error: null,
         loading: false,
         total: 0,
@@ -45,10 +44,23 @@ class CartList extends React.Component{
     handleFetchCart = () => {
         this.setState({loading: true});
         authAxios
-            .get(myCartUrl)
+            .get(myCartUrl(this.props.username))
                 .then(res => {
-                    this.setState({data: res.data, loading: false});
-                    this.formatingData(res.data);
+                    const data = res.data.products.map((product) => {
+                        return {
+                            key: product.id,
+                            count: product.count,
+                            price: product.product_total,
+                            name: product.product.name
+                        }
+
+                    })
+                    this.setState({
+                        data: res.data,
+                        total: res.data.cart_total,
+                        dataTable: data,
+                        loading: false
+                    });
                 })
                 .catch(err => {
                     this.setState({error: err})
@@ -57,7 +69,6 @@ class CartList extends React.Component{
 
     start = () => {
         this.setState({ loading: true });
-        // ajax request after empty completing
         setTimeout(() => {
           this.setState({
             selectedRowKeys: [],
@@ -74,25 +85,6 @@ class CartList extends React.Component{
         this.setState({ selectedRowKeys });
     };
 
-    formatingData = (data) => {
-        const newData = [];
-        for (let i=0; i<data.length; i++){
-            if (data[i]['products'] !== []){
-                const products = data[i]['products'];
-
-                for (let j=0; j<products.length; j++){
-                    newData.push({
-                        key: `${products[j]['id']}`,
-                        name: `${products[j]['product']['name']}`,
-                        count: `${products[j]['count']}`,
-                        price: `${products[j]['product_total']} руб.`,
-                    });
-                }
-            }
-        }
-        this.setState({dataTable: newData, total: data[0]['cart_total']});
-    };
-
     handleChangeItem = (id, name) => {
         const {changedCount} = this.state;
         const product_name = name;
@@ -101,6 +93,7 @@ class CartList extends React.Component{
             .put(updateCartItemUrl(id), {product_name, count})
             .then(res => {
                 this.handleFetchCart();
+                message.success(res.data.message)
             })
             .catch(err => {
                 this.setState({error: err});
@@ -118,13 +111,13 @@ class CartList extends React.Component{
 
     handleRemoveItem = (product_id) => {
         authAxios
-            .delete(deleteCartItemUrl(product_id))
-                .then(res => {
-                    this.handleFetchCart();
-                })
-                .catch(err => {
-                    this.setState({error: err});
-                });
+        .delete(deleteCartItemUrl(product_id))
+            .then(res => {
+                this.handleFetchCart();
+            })
+            .catch(err => {
+                this.setState({error: err});
+            });
     };
     
 
@@ -162,6 +155,7 @@ class CartList extends React.Component{
 
 const mapStateToProps = state => {
     return {
+        username: state.auth.username,
         token: state.auth.token
     }
 }

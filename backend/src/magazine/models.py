@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models as models_gis
 import datetime
+import math
 
 
 class TypeProduct(models.Model):
@@ -24,7 +25,7 @@ class Product(models.Model):
     delivery_time = models.DateField()
     count = models.IntegerField()
     type = models.ForeignKey(TypeProduct, on_delete=models.CASCADE)
-    image = ImageField(upload_to='uploads')
+    image = ImageField(upload_to='uploads', default='uploads/default.png')
 
     class Meta:
         verbose_name = "Продукт"
@@ -41,72 +42,8 @@ class Product(models.Model):
         return self.count
     
     @get_count.setter
-    def set_count(self, new_count):
+    def get_count(self, new_count):
         self.count = new_count
-
-
-class CartItem(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    count = models.PositiveIntegerField(default=1)
-    product_total = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
-
-    class Meta:
-        verbose_name = "Продукт корзины"
-        verbose_name_plural = "Продукты корзины"
-
-    def __str__(self):
-        return f'Объект корзины {self.product.name}'
-    
-
-class Cart(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    products = models.ManyToManyField(CartItem)
-    cart_total = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
-
-    class Meta:
-        verbose_name = "Корзина"
-        verbose_name_plural = "Корзины"
-    
-    def __str__(self):
-        return f'Корзина пользователя {self.owner.username}'
-
-    def add_to_cart(self, cart_item, owner):
-        cart_item = CartItem.objects.get(id=cart_item.id)
-        cart_owner = Cart.objects.get(owner=owner)
-        if cart_item not in cart_owner.products.all():
-            self.products.add(cart_item)
-            self.save()
-
-    def remove_from_cart(self, product, cart_item_id):
-        for _item in self.products.all():
-            if _item.product == product:
-                self.products.remove(_item)
-                product.count += _item.count
-                product.save()
-                self.cart_total -= _item.product_total
-                self.save()
-    
-    def change_from_cart(self, count, cart_item):
-        cart_item.count = int(count)
-        cart_item.product_total = int(count) * Decimal(cart_item.product.price)
-        cart_item.save()
-        new_cart_total = 0.00
-        for item in self.products.all():
-            new_cart_total += float(item.product_total)
-        self.cart_total = new_cart_total
-        self.save()
-
-
-ORDER_STATUS_CHOICES = [
-    ("Принят к обработке", "Принят к обработке"),
-    ("Выполняется", "Выполняется"),
-    ("Оплачен", "Оплачен"),
-]
-
-ORDER_TYPE_OF_PURCHASE = [
-    ("Доставка курьером", "Доставка курьером"),
-    ("Самовывоз", "Самовывоз"),
-]
 
 
 class Profile(models.Model):
@@ -129,10 +66,78 @@ class Profile(models.Model):
         self.busy = state
 
 
+class CartItem(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    count = models.PositiveIntegerField(default=1)
+    product_total = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
+
+    class Meta:
+        verbose_name = "Продукт корзины"
+        verbose_name_plural = "Продукты корзины"
+
+    def __str__(self):
+        return f'Объект корзины {self.product.name}'
+    
+
+class Cart(models.Model):
+    owner = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    products = models.ManyToManyField(CartItem)
+    cart_total = models.DecimalField(max_digits=9, decimal_places=2, default=0.00)
+
+    class Meta:
+        verbose_name = "Корзина"
+        verbose_name_plural = "Корзины"
+    
+    def __str__(self):
+        return f'Корзина пользователя {self.owner.user.username}'
+
+    def add_to_cart(self, cart_item, cart):
+        if cart_item not in cart.products.all():
+            cart.products.add(cart_item)
+            cart.cart_total += cart_item.product_total
+            cart.save()
+
+    def remove_from_cart(self, product, cart):
+        for cart_item in cart.products.all():
+            if cart_item.product == product:
+                cart.products.remove(cart_item)
+                product.count += cart_item.count
+                product.save()  
+                cart.cart_total -= cart_item.product_total
+                cart_item.delete()
+                cart.save()
+    
+    def change_from_cart(self, count, cart_item, cart):
+        difference = cart_item.count - int(count)
+        if difference < 0:
+            difference = math.fabs(difference)  
+        cart_item.product.count += difference
+        cart_item.count = int(count)
+        cart_item.product_total = int(count) * cart_item.product.price
+        cart_item.save()
+
+        new_cart_total = Decimal(0.00)
+        for item in cart.products.all():
+            new_cart_total += item.product_total
+        cart.cart_total = new_cart_total
+        cart.save()
+
+
+ORDER_STATUS_CHOICES = [
+    ("Принят к обработке", "Принят к обработке"),
+    ("Выполняется", "Выполняется"),
+    ("Оплачен", "Оплачен"),
+]
+
+ORDER_TYPE_OF_PURCHASE = [
+    ("Доставка курьером", "Доставка курьером"),
+    ("Самовывоз", "Самовывоз"),
+]
+
+
 class Location(models.Model):
-    title = models.CharField(max_length=80, blank=True)
-    profile = models.ForeignKey(Profile, on_delete=models.CASCADE,
-                                blank=True, null=True)
+    title = models.CharField(max_length=80)
+    profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     point = models_gis.PointField(default='POINT(0 0)', srid=4326)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -148,9 +153,17 @@ class Location(models.Model):
     def longitude(self):
         return self.point[0]
 
+    @longitude.setter
+    def longitude(self, new_longitude):
+        self.point[0] = new_longitude
+
     @property
     def latitude(self):
         return self.point[1]
+
+    @latitude.setter
+    def latitude(self, new_latitude):
+        self.point[1] = new_latitude
 
 
 class Shop(models.Model):
@@ -176,7 +189,8 @@ class Shop(models.Model):
 
 
 class RoomOrder(models.Model):
-    """ In room exist client and courier,
+    """
+    In room exist client and courier,
     they can sharing location between themselves
     """
     participants = models.ManyToManyField(
@@ -189,7 +203,7 @@ class RoomOrder(models.Model):
         verbose_name_plural = "Комнаты клиент-курьер"
 
     def __str__(self):
-        return f"Комната {self.id}"
+        return f"Комната №{self.id}"
 
 
 class Order(models.Model):
@@ -198,7 +212,7 @@ class Order(models.Model):
     first_name = models.CharField(max_length=30)
     last_name = models.CharField(max_length=30)
     phone = models.CharField(max_length=13)
-    date = models.DateTimeField(default=datetime.datetime.today)
+    date = models.DateTimeField(default=datetime.datetime.today())
     purchase_type = models.CharField(max_length=30, choices=ORDER_TYPE_OF_PURCHASE, default="Самовывоз")
     status = models.CharField(max_length=30, choices=ORDER_STATUS_CHOICES, default="Принят к обработке")
     payment = models.BooleanField(default=False)
@@ -208,14 +222,15 @@ class Order(models.Model):
         verbose_name_plural = "Заказы"
 
     def __str__(self):
-        return f"Заказ номер {self.id}"
+        return f"Заказ {self.user.user.username}"
 
     def search_free_driver(self):
-        profile_drivers = Profile.objects.filter(
+        profile_driver = Profile.objects.filter(
             busy=False,
+            user__is_active=True,
             user__is_staff=True
         ).first()
-        return profile_drivers
+        return profile_driver
 
     @property
     def check_status(self):

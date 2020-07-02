@@ -41,6 +41,7 @@ class WebsocketService {
 
     socketNewLocation(data) {
         const parsedData = JSON.parse(data);
+        console.log(parsedData)
         const command = parsedData.command;
         if (Object.keys(this.callbacks).length === 0) {
             return;

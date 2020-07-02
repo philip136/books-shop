@@ -33,6 +33,7 @@ def get_current_order_room(roomId):
 
 class GeoConsumer(WebsocketConsumer):
     def fetch_locations(self, data):
+        """ Get locations data from order room """
         locations = get_current_locations(data['roomID'])
         content = {
             'command': 'locations',
@@ -41,6 +42,7 @@ class GeoConsumer(WebsocketConsumer):
         self.send_location(content)
 
     def new_location(self, data):
+        """ Send new location for current user """
         profile_contact = get_current_profile(data['who_shared'])
         location = Location.objects.filter(profile=profile_contact).last()
         location.point = fromstr(
@@ -79,12 +81,14 @@ class GeoConsumer(WebsocketConsumer):
         self.commands[data['command']](self, data)
 
     def locations_to_json(self, locations):
+        """ List with locations data """
         result = []
         for location in locations:
             result.append(self.location_to_json(location))
         return result
 
     def location_to_json(self, location):
+        """ Location data for once user """
         return {
             'id': location.id,
             'point': location.point.coords,

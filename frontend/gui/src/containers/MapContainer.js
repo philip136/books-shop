@@ -3,14 +3,9 @@ import {Map as LeafletMap, TileLayer, Marker, Popup} from 'react-leaflet';
 import { iconPerson } from "../components/CustomMarker";
 import WebSocketInstance from "../websocket";
 import {connect} from 'react-redux';
-import * as actions from '../store/actions/orderRoom';
 import {Button} from "bootstrap-4-react/lib/components";
 import Control from 'react-leaflet-control';
 import {Link} from 'react-router-dom';
-import {orderRoomUrl} from '../constants';
-import { authAxios } from '../utils';
-import { Redirect } from "react-router-dom";
-import axios from 'axios';
 
 
 class MapContainer extends React.Component {

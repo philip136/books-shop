@@ -88,15 +88,15 @@ const CustomLayout = (props) => {
                 >
                   
                   <Menu.Item key="1"
-                    onClick={() => props.history.push('/products/type/books/')}>
+                    onClick={() => props.history.push('/products/type/book/')}>
                     Книги
                   </Menu.Item>
                   <Menu.Item key="2"
-                    onClick={() => props.history.push('/products/type/notepads/')}>
+                    onClick={() => props.history.push('/products/type/notepad/')}>
                     Блокноты
                   </Menu.Item>
                   <Menu.Item key="3"
-                  onClick={() => props.history.push('/products/type/calendars/')}>
+                  onClick={() => props.history.push('/products/type/calendar/')}>
                   Календари
                   </Menu.Item>
                 </SubMenu>

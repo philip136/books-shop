@@ -10,8 +10,9 @@ from magazine.models import (Product,
 from rest_framework import status
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
-from django.contrib.gis.geos import (GEOSGeometry)
-import datetime
+from django.contrib.gis.geos import (GEOSGeometry,fromstr)
+from django.http import HttpRequest
+from rest_framework.views import APIView
 from rest_framework.generics import (ListAPIView,
                                      RetrieveAPIView,
                                      DestroyAPIView,
@@ -33,6 +34,11 @@ from magazine.api.serializer import (ProductSerializer,
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from decimal import Decimal
+from django.utils.decorators import method_decorator
+from typing import Union
+from .decorators import (serializer_validate,
+                        operations_with_cart)
+import datetime
 
 
 class TypeProductsApi(RetrieveAPIView):
@@ -43,15 +49,13 @@ class TypeProductsApi(RetrieveAPIView):
     serializer_class = TypeProductSerializer
     permission_classes = (AllowAny,)
 
-    @method_decorator(cache_page(86400))
-    def get(self, request, *args, **kwargs):
-        products = [product for product in self.get_queryset().iterator()]
-        return Response(self.serializer_class(products, many=True,
-                        context={'request': request}).data)
+    def get(self, request: HttpRequest, *args, **kwargs) -> Response:
+        products: list = [product for product in self.get_queryset().iterator()]
+        return Response(self.serializer_class(products, many=True).data)
 
     def get_queryset(self):
-        type_name = self.kwargs.get('type')
-        products = Product.objects.filter(type__type__icontains=type_name)
+        type_name: str = self.kwargs.get('type')
+        products: list = Product.objects.filter(type__type__icontains=type_name)
         return products
 
 
@@ -63,12 +67,6 @@ class ProductsApi(ListAPIView):
     serializer_class = ProductSerializer
     permission_classes = (AllowAny,)
 
-    @method_decorator(cache_page(86400))
-    def list(self, request):
-        queryset = self.get_queryset()
-        serializer = self.serializer_class(queryset, many=True)
-        return Response(serializer.data)
-
 
 class ProductDetailApi(RetrieveAPIView):
     """
@@ -79,148 +77,47 @@ class ProductDetailApi(RetrieveAPIView):
     permission_classes = (AllowAny,)
 
 
-class CartItemApi(RetrieveAPIView):
-    """ 
-    Api for create item and after create cart
-    """
-
-    queryset = CartItem.objects.all()
-    serializer_class = CartItemSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def post(self, request, *args, **kwargs):
-        product = request.data.get('product_name', None)
-        if product is None:
-            return Response({
-                'message': "Продукт корзины не найден"
-            }, status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            product = Product.objects.get(name=product)
-            count = request.data.get('count', None)
-            product_total = product.get_price() * int(count)
-            try:
-                cart = Cart.objects.get(owner=request.user)
-                item = cart.products.get(product=product)
-                if item in cart.products.all():
-                    return Response({'message': 'Данный продукт уже есть у вас в корзине'},
-                                    status=status.HTTP_200_OK
-                                    )
-                else:
-                    raise ObjectDoesNotExist
-
-            except ObjectDoesNotExist:
-                item = CartItem.objects.create(
-                    product=product,
-                    count=count,
-                    product_total=Decimal(product_total)
-                )
-                item.save()
-
-            count_after = product.get_count - int(count)
-            product.set_count = count_after
-
-            try:
-                cart = Cart.objects.get(owner=request.user)
-            except Cart.DoesNotExist:
-                cart = Cart()
-                cart.owner = request.user
-                cart.save()
-            cart.add_to_cart(item, request.user)
-            new_cart_total = 0.00
-            for item in cart.products.all():
-                new_cart_total += float(item.product_total) 
-            cart.cart_total = new_cart_total
-            cart.save()
-            product.save()
-            return Response({'message': 'Объект корзины успешно создан'},
-                            status=status.HTTP_201_CREATED)
-        return Response({'message': serializer.errors},
-                        status=status.HTTP_400_BAD_REQUEST)
+_ADD_TO_CART = "add_to_cart"
+_REMOVE_FROM_CART = "remove_from_cart"
+_CHANGE_FROM_CART = "change_from_cart"
 
 
-class CartApi(ListAPIView):
+class CartApi(RetrieveAPIView):
     """
     Api for show a cart 
     """
     serializer_class = CartSerializer
     permission_classes = (IsAuthenticated,)
+    lookup_field = 'username'
 
     def get_queryset(self):
-        try:
-            cart = Cart.objects.filter(owner=self.request.user)
-        except Cart.DoesNotExist:
-            cart = Cart()
-            cart.owner = self.request.user
+        user: User = self.request.user
+        profile: Profile = Profile.objects.get(user=user)
+        cart: Union[Cart, None] = Cart.objects.filter(owner=profile).first()
+        if cart is None:
+            cart: Cart = Cart.objects.create(owner=profile)
             cart.save()
         return cart
 
+    def get(self, request, *args, **kwargs):
+        serializer = self.serializer_class(self.get_queryset())
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-class DeleteItemApi(DestroyAPIView):
+
+
+class CartItemApi(RetrieveAPIView):
     """ 
-    Api for delete item from cart
+    Api for create item and after create cart
     """
     queryset = CartItem.objects.all()
+    serializer_class = CartItemSerializer
     permission_classes = (IsAuthenticated,)
-
-    def destroy(self, request, *args, **kwargs):
-        pk = kwargs['pk']
-        cart_item = CartItem.objects.get(pk=pk)
-        product = cart_item.product
-        try:
-            cart = Cart.objects.get(owner=request.user)
-        except Cart.DoesNotExist:
-            cart = Cart()
-            cart.owner = request.user
-            cart.save()
-        cart.remove_from_cart(product, cart_item.id)
-        return Response({'message': f'Продукт {product} удален из корзины'},
-                        status=status.HTTP_204_NO_CONTENT
-                        )
-
-
-class LocationList(ListCreateAPIView):
-    """
-        Api for get all markers on map
-    """
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
-
-    def list(self, request):
-        self.serializer_class = LocationSerializer
-        return super(LocationList, self).list(request)
-
-
-class LocationDetail(RetrieveUpdateDestroyAPIView):
-    """
-        Api for detail marker on map
-    """
-    queryset = Location.objects.all()
-    serializer_class = LocationSerializer
-    permission_classes = (IsAuthenticated,)
-
-    def retrieve(self, request, *args, **kwargs):
-        queryset = self.get_object()
-        serializer = LocationSerializer(queryset, many=False)
-        return Response(serializer.data)
-
-    def update(self, request, *args, **kwargs):
-        """ Setup pos for users calling in React map"""
-        user = request.data.get('user')
-        point = request.data.get('point').split(' ')
-        serializer = LocationSerializer(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            location = Location.objects.create(
-                point=GEOSGeometry("POINT(%s %s)" % (point[0], point[1]))
-            )
-            profile = Profile.objects.get(user=user)
-            profile.location = location
-            return Response({
-                'current_position': profile.location
-            }, status=status.HTTP_201_CREATED)
-        return Response({
-            'message': 'Not valid serializer'
-        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    @method_decorator([serializer_validate(serializer_class, None),
+                    operations_with_cart(_ADD_TO_CART)])
+    def post(self, request, *args, **kwargs):
+        return Response({"message": "Товар добавлен в вашу корзину"},
+                        status=status.HTTP_201_CREATED)
 
 
 class UpdateCartItemApi(UpdateAPIView):
@@ -231,29 +128,80 @@ class UpdateCartItemApi(UpdateAPIView):
     serializer_class = CartItemSerializer
     permission_classes = (IsAuthenticated,)
 
+    @method_decorator([serializer_validate(serializer_class, None),
+                    operations_with_cart(_CHANGE_FROM_CART)])
     def update(self, request, *args, **kwargs):
-        count = request.data.get('count', None)
-        if count is None:
-            return Response({'message': "Продукт корзины не найден"},
-                            status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid():
-            pk = self.kwargs['pk']
-            cart_item = CartItem.objects.get(pk=pk)
-            try:
-                cart = Cart.objects.get(owner=request.user)
-            except Cart.DoesNotExist:
-                cart = Cart()
-                cart.owner = request.user
-                cart.save()
-            cart.change_from_cart(count, cart_item)
-            cart.save()
-            return Response({'message': 'Продукт корзины успешно изменен'},
-                            status=status.HTTP_200_OK)
-        return Response({'message': 'Введенные данные невалидны'})
+        return Response({"message": "Товар успешно изменен"},
+                        status=status.HTTP_201_CREATED)
+
+
+class DeleteItemApi(DestroyAPIView):
+    """ 
+    Api for delete item from cart
+    """
+    queryset = CartItem.objects.all()
+    serializer_class = CartItemSerializer
+    permission_classes = (IsAuthenticated,)
+
+    @method_decorator([operations_with_cart(_REMOVE_FROM_CART)])
+    def destroy(self, request, *args, **kwargs):
+        return Response({"message": "Товар удален из корзины"},
+                        status=status.HTTP_204_NO_CONTENT)
+
+
+class LocationList(ListCreateAPIView):
+    """
+    Api for get all markers on map
+    """
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+
+    @method_decorator([serializer_validate(serializer_class, None)])
+    def list(self, request):
+        return super(LocationList, self).list(request)
+
+
+class LocationDetail(RetrieveUpdateDestroyAPIView):
+    """
+     Api for detail marker on map
+    """
+    queryset = Location.objects.all()
+    serializer_class = LocationSerializer
+    permission_classes = (IsAuthenticated,)
+
+    @method_decorator([serializer_validate(serializer_class, None)])
+    def update(self, request, *args, **kwargs):
+        """
+        Setup position for users on React map
+        """
+        user: User = request.user
+        coords_data = kwargs['serializer_data']
+        profile: Profile = Profile.objects.get(user=user)
+        location: Location = Location.objects.filter(profile=profile).first()
+        if location is None:
+            location = Location.objects.create(
+                title=f'Текущая позиция {user.username}',
+                profile=profile,
+                point=fromstr(
+                    "POINT%s %s" % (coords_data['latitude'], coords_data['longitude']),
+                     srid=4326
+                )
+            )
+            location.save()
+        else:
+            location.latitude = coords_data['latitude']
+            location.longitude = coords_data['longitude']
+            location.save()
+        return Response({"message": "Текущее местоположение изменено"},
+                        status=status.HTTP_200_OK)
+
+        
 
 
 class ProfileApi(RetrieveAPIView):
+    """
+    Profile API
+    """
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
@@ -289,8 +237,8 @@ class OrderRoomConnectApi(RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
-        username = request.data.get('username')
-        order_room = RoomOrder.objects.filter(
+        username: str = request.data.get('username')
+        order_room: RoomOrder = RoomOrder.objects.filter(
             participants__user__username__icontains=username
         ).first()
         if order_room is not None:
@@ -306,79 +254,59 @@ class OrderSuccessApi(CreateAPIView):
     serializer_class = OrderSerializer
     permission_classes = (IsAuthenticated,)
 
-    def post(self, request, *args, **kwargs):
-        customer = User.objects.get(username=request.data.get('user'))
-        items = Cart.objects.filter(owner=customer).first()
-        serializer = self.serializer_class(data=request.data)
-        if serializer.is_valid(raise_exception=True):
-            data = {
-                'user': customer,
-                'items': items,
-                'total_price': items.cart_total,
-                'first_name': request.data.get('first_name'),
-                'last_name': request.data.get('last_name'),
-                'phone': request.data.get('phone'),
-                'date': datetime.datetime.now(),
-                'purchase_type': request.data.get('purchase_type'),
-            }
-            shop = Shop.objects.first()
-            if shop.is_working():
-                if request.data.get('purchase_type') == "Самовывоз":
-                    order = Order.objects.create(**data)
-                    order.save()
-                    roomOrder = RoomOrder()
-                    roomOrder.save()
-                    profile = Profile.objects.get(user=customer)
-                    personal = shop.personal.filter(busy=False).first()
-                    location_customer = Location.objects.create(
-                        title=f'{profile}',
-                        profile=profile
-                    )
-                    location_customer.save()
-                    roomOrder.participants.add(profile)
-                    roomOrder.participants.add(personal)
-                    roomOrder.locations.add(location_customer)
-                    roomOrder.locations.add(shop.position)
-                    serializer_room = OrderRoomSerializer(instance=roomOrder)
-                    return Response({
-                        'message': serializer_room.data,
-                    }, status=status.HTTP_201_CREATED)
-                else:
-                    order = Order.objects.create(**data)
-                    profile_customer = Profile.objects.get(user=customer)
-                    profile_driver = order.search_free_driver()
-                    if profile_driver is not None:
-                        profile_driver.get_busy = True
-                        room_order = RoomOrder()
-                        room_order.save()
-                        customer_location = Location.objects.create(
-                            title=f'{profile_customer}',
-                            profile=profile_customer)
-                        driver_location = Location.objects.create(
-                            title=f'{profile_driver}',
-                            profile=profile_driver
-                        )
-                        customer_location.save()
-                        driver_location.save()
-                        room_order.participants.add(profile_customer)
-                        room_order.participants.add(profile_driver)
-                        room_order.locations.add(customer_location)
-                        room_order.locations.add(driver_location)
-                        serializer_room = OrderRoomSerializer(instance=room_order)
-                        order.save()
-                        return Response({
-                            'message': serializer_room.data,
-                        }, status=status.HTTP_201_CREATED)
-                    return Response({
-                        'message': "Простите свободных курьеров сейчас нет, "
-                        "обратитесь позже"
-                    }, status=status.HTTP_200_OK)
+    @staticmethod
+    def operations_with_room(shop: Shop, type_delivery: str, order_data: dict, customer: Profile):
+        room: RoomOrder = RoomOrder()
+        order: Order = Order.objects.create(**order_data)
+        room.save()
+        order.save()
 
-            return Response({
-                'message': "Простите но наш магазин уже закрыт, "
-                "обратитесь позже мы работаем с 9:00 - 22:00 каждый день"
-            }, status=status.HTTP_200_OK)
-        return Response({'message': serializer.data}, status=status.HTTP_400_BAD_REQUEST)
+        another_location: Union[Location, None] = None
+        courier_or_personal: Union[Profile, None] = None
+
+        customer_location: Location = Location.objects.update_or_create(
+                                        title=f'{customer}',
+                                        profile=order_data.get('user'),
+                                        defaults={'updated_at': datetime.datetime.now()}
+                                    )[0]
+        
+        if type_delivery == "Самовывоз":
+            another_location: Location = shop.position
+            courier_or_personal: Profile = shop.personal.first()
+
+        elif type_delivery == "Доставка курьером":
+            courier: Profile = order.search_free_driver()
+            if courier is not None:
+                courier_or_personal: Profile = courier
+                another_location: Location = Location.objects.update_or_create(
+                    title=f'{courier.user.username}',
+                    profile=courier
+                )[0]
+            else:
+                return Response({'message': "Простите свободных курьеров сейчас нет, "
+                                "обратитесь позже"}, status=status.HTTP_200_OK)
+        room.participants.add(customer, courier_or_personal)
+        room.locations.add(customer_location, another_location)
+
+    @method_decorator([serializer_validate(serializer_class, None)])
+    def post(self, request, *args, **kwargs):
+        customer: Profile = Profile.objects.get(user=request.user)
+        shop: Shop = Shop.objects.first()
+        order_data: dict = kwargs['serializer_data']
+        cart: Cart = Cart.objects.get(owner=customer)
+        order_data.update({
+            'user': customer,
+            'items': cart
+        })
+        
+        if shop.is_working():
+            delivery_type: str = order_data.get('purchase_type')
+            self.operations_with_room(shop, delivery_type, order_data, customer)
+            return Response({"message":"Комната успешно создана"}, status=status.HTTP_200_OK)
+        else:
+            return Response({"message": "Простите но наш магазин уже закрыт, "
+                        "обратитесь позже мы работаем с 9:00 - 22:00 каждый день"}, 
+                        status=status.HTTP_200_OK)
 
 
 
