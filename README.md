@@ -1,1 +1,1 @@
-
+This is an ecommerce website built with Django and React JS. The website displays products. Users can add and remove products to/from their cart while also specifying the quantity of each item. The user can choose the method by which he wants to receive his goods: pickup or delivery by courier. If the delivery method is courier delivery, the courier and customer can track the location on the map.
