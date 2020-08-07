@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'channels',
     'sorl.thumbnail',
-    'debug_toolbar',
+    # 'debug_toolbar',
 ]
 
 MIDDLEWARE = [
