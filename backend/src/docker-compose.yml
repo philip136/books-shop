@@ -10,10 +10,12 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
-  shop_web:
+  django:
+    container_name: shop_web
     build: .
     restart: on-failure
-    command: python /usr/src/app/manage.py runserver 0.0.0.0:8000
+    command:  bash -c "python /usr/src/app/manage.py migrate --noinput &&
+              python /usr/src/app/manage.py runserver 0.0.0.0:8000"
     volumes:
     - .:/usr/src/app
     ports:
