@@ -105,14 +105,25 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 
 # login: philip; password: test12345
 
+# DATABASES = {
+#    'default': {
+#        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+#        'NAME': 'postgres',
+#        'USER': 'postgres',
+#        'PASSWORD': 'admin',
+#        'HOST': 'shop_db',
+#        'PORT': '5432',
+#    }
+# }
+
 DATABASES = {
-    'default': {
+   'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
-        'NAME': 'postgres',
-        'USER': 'postgres',
-        'PASSWORD': 'admin',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'NAME': os.environ.get("POSTGRESQL_DATABASE"),
+        'USER': os.environ.get("POSTGRESQL_USER"),
+        'PASSWORD': os.environ.get("POSTGRESQL_PASSWORD"),
+        'HOST': os.environ.get("POSTGRESQL_HOST"),
+        'PORT': os.environ.get("POSTGRESQL_PORT"),
     }
 }
 
