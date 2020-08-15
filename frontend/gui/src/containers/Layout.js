@@ -23,7 +23,7 @@ const openNotification = (description) => {
 
 
 const roomIdIsExist = (props) => {
-    authAxios
+    authAxios()
         .post(roomUrl, {username: props.username})
         .then(res => {
             if (typeof(res.data.message) === "string"){

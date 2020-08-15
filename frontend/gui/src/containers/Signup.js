@@ -28,19 +28,17 @@ class RegistrationForm extends React.Component {
     }
 
     render() {
-        const { token } = this.props;
-        
-        if (token){
-            return <Redirect to="/" />
+        if (typeof(this.props.token) !== "undefined"){
+            return (<Redirect to='/' />)
         }
-        else{
-            let errorMessage = null;
-            if (this.props.error){
-                errorMessage = (
-                    <p>{this.props.error.message}</p>
-                );
-            }
-            const form = this.props.form;
+
+        let errorMessage = null;
+        if (this.props.error){
+            errorMessage = (
+                <p>{this.props.error.message}</p>
+            );
+        }
+        const form = this.props.form;
 
             return (
                <div>
@@ -149,9 +147,6 @@ class RegistrationForm extends React.Component {
                   }
               </div> 
             );
-        }
-
-        
     }
 }
 

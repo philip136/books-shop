@@ -27,7 +27,7 @@ export const getUserRoomSuccess = room => {
 
 export const getUserRoom = (id) => {
     return dispatch => {
-        authAxios
+        authAxios()
         .get(orderRoomUrl(id))
         .then(res => dispatch(getUserRoomSuccess(res.data)));
     };

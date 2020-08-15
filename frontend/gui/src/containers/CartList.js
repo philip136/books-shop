@@ -43,7 +43,7 @@ class CartList extends React.Component{
 
     handleFetchCart = () => {
         this.setState({loading: true});
-        authAxios
+        authAxios()
             .get(myCartUrl(this.props.username))
                 .then(res => {
                     const data = res.data.products.map((product) => {
@@ -89,7 +89,7 @@ class CartList extends React.Component{
         const {changedCount} = this.state;
         const product_name = name;
         const count = changedCount;
-        authAxios
+        authAxios()
             .put(updateCartItemUrl(id), {product_name, count})
             .then(res => {
                 this.handleFetchCart();
@@ -110,7 +110,7 @@ class CartList extends React.Component{
     };
 
     handleRemoveItem = (product_id) => {
-        authAxios
+        authAxios()
         .delete(deleteCartItemUrl(product_id))
             .then(res => {
                 this.handleFetchCart();

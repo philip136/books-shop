@@ -46,7 +46,7 @@ class ProductDetail extends React.Component{
         const id = this.props.match.params.productId;
         this.setState({ loading: true });
         
-        authAxios
+        authAxios()
             .post(addToCartUrl(id), { 
                 product_name: product.name,
                 count: this.state.count

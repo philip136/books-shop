@@ -1,22 +1,12 @@
 import os
 
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+SECRET_KEY = os.environ.get("SECRET_KEY")
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '4)-@%l&2&t9tyvez+!h02!$o(t74eqh&6$_218#e5*5$0gf)f$'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = bool(int(os.environ.get("DEBUG", default=0)))
 
 ALLOWED_HOSTS = []
-
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -103,19 +93,6 @@ ACCOUNT_AUTHENTICATION_METHOD = 'username'
 ACCOUNT_EMAIL_VERIFICATION = 'none'
 
 
-# login: philip; password: test12345
-
-# DATABASES = {
-#    'default': {
-#        'ENGINE': 'django.contrib.gis.db.backends.postgis',
-#        'NAME': 'postgres',
-#        'USER': 'postgres',
-#        'PASSWORD': 'admin',
-#        'HOST': 'shop_db',
-#        'PORT': '5432',
-#    }
-# }
-
 DATABASES = {
    'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
@@ -134,9 +111,6 @@ CACHES = {
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {

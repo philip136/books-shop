@@ -40,7 +40,7 @@ class OrderForm extends React.Component{
     handleCheckout = (data) => {
         let extendData = {...data};
         extendData.user = localStorage.getItem('username');
-        authAxios
+        authAxios()
             .post(orderUrl, extendData)
             .then(res => {
                 if (typeof(res.data.message) === "string"){
