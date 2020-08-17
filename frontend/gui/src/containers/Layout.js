@@ -34,8 +34,7 @@ const roomIdIsExist = (props) => {
             }
         })
         .catch(err => {
-            message.error(err);
-            props.history.push('/');
+            props.history.push('/login/');
         });
 }
 

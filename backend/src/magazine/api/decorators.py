@@ -12,7 +12,10 @@ from returns.pipeline import is_successful
 from returns.result import Result, Success, Failure
 from decimal import Decimal
 from .operations import operation_with_cart
+import logging
 
+
+logger = logging.getLogger(__name__)
 
 
 def serializer_validate(serializer_class, instance):
@@ -24,6 +27,7 @@ def serializer_validate(serializer_class, instance):
             serializer = serializer_class(instance=instance, data=request.data)
             if serializer.is_valid():
                 data = serializer.data
+                logger.debug(data)
                 return function(request, serializer_data=data)
             return Response({
                 "message": "Проверьте правильность введенных данных"

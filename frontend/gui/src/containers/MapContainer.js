@@ -5,7 +5,8 @@ import WebSocketInstance from "../websocket";
 import {connect} from 'react-redux';
 import {Button} from "bootstrap-4-react/lib/components";
 import Control from 'react-leaflet-control';
-import {Link} from 'react-router-dom';
+import {Link, Redirect} from 'react-router-dom';
+
 
 
 class MapContainer extends React.Component {
@@ -112,7 +113,8 @@ class MapContainer extends React.Component {
 const mapStateToProps = (state) => {
     return {
         username: state.auth.username,
-        locations: state.location.locations
+        locations: state.location.locations,
+        token: state.auth.token
     };
 };
 

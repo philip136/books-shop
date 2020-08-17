@@ -8,11 +8,8 @@ from magazine.models import (Product,
                              Profile,
                              RoomOrder)
 from rest_framework import status
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
 from django.contrib.gis.geos import (GEOSGeometry,fromstr)
 from django.http import HttpRequest
-from rest_framework.views import APIView
 from rest_framework.generics import (ListAPIView,
                                      RetrieveAPIView,
                                      DestroyAPIView,
@@ -32,13 +29,15 @@ from magazine.api.serializer import (ProductSerializer,
                                      LocationSerializer,
                                      OrderRoomSerializer)
 from django.contrib.auth.models import User
-from django.core.exceptions import ObjectDoesNotExist
-from decimal import Decimal
 from django.utils.decorators import method_decorator
 from typing import Union
 from .decorators import (serializer_validate,
-                        operations_with_cart)
+                         operations_with_cart)
+import logging
 import datetime
+
+
+logger = logging.getLogger(__name__)
 
 
 class TypeProductsApi(RetrieveAPIView):
@@ -104,7 +103,6 @@ class CartApi(RetrieveAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-
 class CartItemApi(RetrieveAPIView):
     """ 
     Api for create item and after create cart
@@ -114,7 +112,7 @@ class CartItemApi(RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
     
     @method_decorator([serializer_validate(serializer_class, None),
-                    operations_with_cart(_ADD_TO_CART)])
+                       operations_with_cart(_ADD_TO_CART)])
     def post(self, request, *args, **kwargs):
         return Response({"message": "Товар добавлен в вашу корзину"},
                         status=status.HTTP_201_CREATED)
@@ -129,7 +127,7 @@ class UpdateCartItemApi(UpdateAPIView):
     permission_classes = (IsAuthenticated,)
 
     @method_decorator([serializer_validate(serializer_class, None),
-                    operations_with_cart(_CHANGE_FROM_CART)])
+                       operations_with_cart(_CHANGE_FROM_CART)])
     def update(self, request, *args, **kwargs):
         return Response({"message": "Товар успешно изменен"},
                         status=status.HTTP_201_CREATED)
@@ -194,8 +192,6 @@ class LocationDetail(RetrieveUpdateDestroyAPIView):
             location.save()
         return Response({"message": "Текущее местоположение изменено"},
                         status=status.HTTP_200_OK)
-
-        
 
 
 class ProfileApi(RetrieveAPIView):
