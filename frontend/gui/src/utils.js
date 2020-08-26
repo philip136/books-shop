@@ -2,15 +2,17 @@ import axios from 'axios';
 import {endpoint} from './constants';
 
 
-export function authAxios() {
+export const authAxios = () => {
     const accessToken = localStorage.getItem("token");
     return axios.create({
         baseUrl: endpoint,
-        timeout: 5000,
         headers: {
-            Authorization: accessToken ? "Token " + accessToken : null,
+            Authorization: "JWT " + accessToken,
             "Content-Type": "application/json",
-            accept: "application/json",
+            "accept": "application/json",
         },
     });
-}
+};
+
+
+

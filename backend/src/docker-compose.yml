@@ -13,7 +13,7 @@ services:
   django:
     container_name: shop_web
     build: .
-    restart: on-failure
+    restart: always
     command:  bash -c "python /usr/src/app/manage.py migrate --noinput &&
               python /usr/src/app/manage.py runserver 0.0.0.0:8000"
     volumes:

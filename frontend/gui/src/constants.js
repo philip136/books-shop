@@ -16,5 +16,6 @@ export const locationDetail = user => `${endpoint}location/${user}/`;
 export const socket_url = roomId => `ws://127.0.0.1:8000/ws/${roomId}/`;
 export const orderRoomUrl = roomId => `${endpoint}order-room/${roomId}/`;
 export const roomUrl = `${endpoint}get-room/`;
-export const registrationUrl = `${localhost}/rest-auth/registration/`;
-export const loginUrl = `${localhost}/rest-auth/login/`;
+export const registrationUrl = `${endpoint}create/user/`;
+export const loginUrl = `${endpoint}token/obtain/`;
+export const refreshTokenUrl = `${endpoint}token/refresh/`;

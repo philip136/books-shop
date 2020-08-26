@@ -1,6 +1,6 @@
 import * as actionTypes from './actionTypes';
 import axios from 'axios';
-import {registrationUrl, loginUrl} from "../../constants";
+import {registrationUrl, loginUrl, refreshTokenUrl} from "../../constants";
 
 
 export const authStart = () => {
@@ -9,11 +9,25 @@ export const authStart = () => {
     };
 };
 
-export const authSuccess = (token, username) => {
+export const updateToken = (token, refreshToken, username, expirationDate, is_staff) => {
+    return {
+        type: actionTypes.AUTH_UPDATE_TOKEN,
+        token: token,
+        refreshToken: refreshToken,
+        username: username,
+        expirationDate: expirationDate,
+        is_staff: is_staff
+    };
+}
+
+export const authSuccess = (token, refreshToken, username, expirationDate, is_staff) => {
     return {
         type: actionTypes.AUTH_SUCCESS,
         token: token,
-        username: username
+        refreshToken: refreshToken,
+        username: username,
+        expirationDate: expirationDate,
+        is_staff: is_staff
     }
 }
 
@@ -24,8 +38,24 @@ export const authFail = error => {
     };
 };
 
+export const authRefresh = promise => {
+    return {
+        type: actionTypes.AUTH_REFRESHING_TOKEN,
+        promise
+    };
+};
+
+export const authDoneRefresh = () => {
+    return {
+        type: actionTypes.AUTH_DONE_REFRESHING_TOKEN
+    };
+};
+
+
 export const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('is_staff');
     localStorage.removeItem('username');
     localStorage.removeItem('expirationDate');
     return {
@@ -33,13 +63,6 @@ export const logout = () => {
     };
 };
 
-export const checkAuthTimeOut = expirationTime => {
-    return dispatch => {
-        setTimeout(() => {
-            dispatch(logout());
-        }, expirationTime * 1000);
-    };
-};
 
 export const authSignup = (username, email, password1, password2, first_name, last_name) => {
     return dispatch => {
@@ -53,13 +76,17 @@ export const authSignup = (username, email, password1, password2, first_name, la
             last_name: last_name
         })
         .then(res => {
-            const token = res.data.key;
-            const expirationDate = new Date(new Date().getTime() + 3600 * 1000);
+            const token = res.data.access;
+            const refreshToken = res.data.refresh;
+            const expirationDate = res.data.expirationDate;
+            const is_staff = res.data.is_staff;
             localStorage.setItem('token', token);
+            localStorage.setItem('refreshToken', refreshToken);
             localStorage.setItem('username', username);
             localStorage.setItem('expirationDate', expirationDate);
-            dispatch(authSuccess(token, username));
-            dispatch(checkAuthTimeOut(3600));
+            dispatch(authSuccess(
+                token, refreshToken, username, expirationDate, is_staff)
+            );
         })
         .catch(err => {
             dispatch(authFail(err));
@@ -75,35 +102,58 @@ export const authLogin = (username, password) => {
             password: password
         })
         .then(res => {
-            const token = res.data.key;
-            const expirationDate = new Date(new Date().getTime() + 3600 * 1000);
+            const token = res.data.access;
+            const refreshToken = res.data.refresh;
+            const expirationDate = res.data.expirationDate;
+            const is_staff = res.data.is_staff;
             localStorage.setItem('token', token);
+            localStorage.setItem('refreshToken', refreshToken);
+            localStorage.setItem('is_staff', is_staff);
             localStorage.setItem('username', username);
             localStorage.setItem('expirationDate', expirationDate);
-            dispatch(authSuccess(token, username));
-            dispatch(checkAuthTimeOut(3600));
+            dispatch(authSuccess(
+                token, refreshToken, username, expirationDate, is_staff)
+            );
         })
         .catch(err => {
             dispatch(authFail(err));
         });
     };
 };
-export const authCheckState = () => {
-    return dispatch => {
-        const token = localStorage.getItem('token');
-        const username = localStorage.getItem('username');
-        if (token === undefined){
+
+export const refreshToken = (dispatch, refresh) => {
+    var refreshTokenPromise = axios.post(refreshTokenUrl, {refresh})
+        .then(res => {
+            const newToken = res.data.access;
+            const newRefreshToken = res.data.refresh;
+            const expirationDate = res.data.expirationDate;
+            const username = localStorage.getItem("username");
+            const is_staff = localStorage.getItem("is_staff");
+            localStorage.setItem("token", newToken);
+            localStorage.setItem("username", username);
+            localStorage.setItem("is_staff", is_staff);
+            localStorage.setItem("refreshToken", newRefreshToken);
+            localStorage.setItem("expirationDate", expirationDate);
+            dispatch({type: actionTypes.AUTH_DONE_REFRESHING_TOKEN});
+            dispatch(updateToken(
+                newToken, newRefreshToken, username, expirationDate, is_staff)
+            );
+            return Promise.resolve(newToken);
+        })
+        .catch(err => {
+            dispatch({type: actionTypes.AUTH_DONE_REFRESHING_TOKEN});
+            console.log('error refreshing token', err);
             dispatch(logout());
-        }
-        else{
-            const expirationDate = new Date(localStorage.getItem('expirationDate'));
-            if (expirationDate <= new Date()){
-                dispatch(logout());
-            }
-            else{
-                dispatch(authSuccess(token, username));
-                dispatch(checkAuthTimeOut((expirationDate.getTime() - new Date().getTime()) / 1000));
-            }
-        }
-    };
+            return Promise.reject(err);
+        });
+
+    dispatch({
+        type: actionTypes.AUTH_REFRESHING_TOKEN,
+        refreshingPromise: refreshTokenPromise
+    });
+
+    return refreshTokenPromise;
 };
+
+
+

@@ -10,11 +10,6 @@ import './assets/style.css';
 import WebSocketInstance from "./websocket";
 
 class App extends Component {
-
-  componentDidMount() {
-    this.props.onTryAutoSignup();
-  }
-
   constructor(props) {
     super(props);
     WebSocketInstance.addCallbacks(
@@ -44,7 +39,6 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => {
   return {
-    onTryAutoSignup: () => dispatch(actions.authCheckState()),
     addLocation: location => dispatch(locationActions.addLocation(location)),
     setLocations: locations => dispatch(locationActions.setLocations(locations)),
   };

@@ -36,24 +36,25 @@ class NormalLoginForm extends React.Component{
     this.props.onAuth(value.username, value.password);
   }
 
-  render(){ 
-      if (this.props.token !== null){
+  render(){
+      const {token, error, form, loading} = this.props;
+
+      if (token !== null){
         return (<Redirect to='/' />)
       }
 
       let errorMessage = null;
-      if (this.props.error) {
+      if (error) {
           errorMessage = (
-              <p>{this.props.error.message}</p>
+              <p>{error.message}</p>
           );
       }
-      const form = this.props.form;
       
       return (
         <div>
           {errorMessage}
            {
-             this.props.loading ? 
+             loading ?
              <Spin indicator={antIcon} />
              
             :
@@ -89,13 +90,12 @@ class NormalLoginForm extends React.Component{
                 <Checkbox>Запомнить меня</Checkbox>
               </Form.Item>
         
-              <Form.Item {...tailLayout}>
+              <Form.Item wrapperCol={{...tailLayout.wrapperCol}}>
                 <Button type="primary" htmlType="submit" style={{marginRight: '10px'}}>
                   Войти
                 </Button>
 
-                <NavLink 
-                  {...tailLayout}
+                <NavLink
                   to='/signup/'> Регистрация
               </NavLink>
               </Form.Item>
@@ -118,7 +118,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatchToProps = dispatch => {
     return {
-        onAuth: (username, password) => dispatch(actions.authLogin(username, password)) 
+        onAuth: (username, password) => dispatch(actions.authLogin(username, password))
     }
 }
 

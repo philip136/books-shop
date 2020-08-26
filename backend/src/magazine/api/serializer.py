@@ -13,17 +13,52 @@ from magazine.models import (Product,
                              Location,
                              Shop,
                              RoomOrder)
+from shop.settings import SIMPLE_JWT
 from django.contrib.auth.models import User
+from rest_framework_simplejwt.serializers import (TokenObtainPairSerializer,
+                                                  TokenRefreshSerializer)
+import logging
 import datetime
 import re
 
 
-class RegisterSerializer(serializers.Serializer):
+logger = logging.getLogger(__name__)
+
+
+class UserSerializerLogIn(TokenObtainPairSerializer):
+    """
+        Custom Obtain token append username, expirationDate for access token
+        and status_staff for permissions routes
+    """
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        user_status = User.objects.get(username=attrs["username"]).is_staff
+        data["username"] = attrs["username"]
+        data["is_staff"] = user_status
+        data["expirationDate"] = SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']
+        return data
+
+
+class UserSerializerLogInRefresh(TokenRefreshSerializer):
+    """
+        Custom Refresh token append expirationDate field
+    """
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        data["expirationDate"] = SIMPLE_JWT['REFRESH_TOKEN_LIFETIME']
+        return data
+
+
+class RegisterSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=allauth_settings.EMAIL_REQUIRED)
     first_name = serializers.CharField(required=True, write_only=True)
     last_name = serializers.CharField(required=True, write_only=True)
     password1 = serializers.CharField(required=True, write_only=True)
     password2 = serializers.CharField(required=True, write_only=True)
+
+    class Meta:
+        model = Profile
+        fields = ['email', 'first_name', 'last_name', 'password1', 'password2']
 
     def validate_email(self, email):
         email = get_adapter().clean_email(email)
@@ -62,6 +97,14 @@ class RegisterSerializer(serializers.Serializer):
         user.save()
         return user
 
+    def create(self, validated_data):
+        password = validated_data.pop('password1', None)
+        instance = self.Meta.model(**validated_data)  # as long as the fields are the same, we can just use this
+        if password is not None:
+            instance.set_password(password)
+        instance.save()
+        return instance
+
 
 class TypeProductSerializer(serializers.ModelSerializer):
     image = serializers.ImageField(max_length=None, use_url=True)
@@ -77,7 +120,6 @@ class TypeProductSerializer(serializers.ModelSerializer):
             'count',
             'type',
         ]
-
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -143,12 +185,12 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'is_superuser',
+            'is_staff',
             'username',
             'first_name',
             'last_name',
             'is_active'
         ]
-
 
 
 class LocationSerializer(serializers.ModelSerializer):
@@ -162,9 +204,7 @@ class LocationSerializer(serializers.ModelSerializer):
             'latitude',
             'longitude',
         ]
-        read_only_fields = ['id', 'title', 'profile',]
-
-
+        read_only_fields = ['id', 'title', 'profile']
 
 
 class CartSerializer(serializers.ModelSerializer):

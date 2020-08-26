@@ -64,7 +64,7 @@ class CartList extends React.Component{
                 })
                 .catch(err => {
                     this.setState({error: err})
-                });
+                })
     };
 
     start = () => {
@@ -89,7 +89,7 @@ class CartList extends React.Component{
         const {changedCount} = this.state;
         const product_name = name;
         const count = changedCount;
-        authAxios()
+        authAxios
             .put(updateCartItemUrl(id), {product_name, count})
             .then(res => {
                 this.handleFetchCart();
@@ -110,7 +110,7 @@ class CartList extends React.Component{
     };
 
     handleRemoveItem = (product_id) => {
-        authAxios()
+        authAxios
         .delete(deleteCartItemUrl(product_id))
             .then(res => {
                 this.handleFetchCart();
@@ -132,6 +132,7 @@ class CartList extends React.Component{
             onChange: this.onSelectChange,
         };
         const hasSelected = selectedRowKeys.length > 0;
+        const orderSuccess = localStorage.getItem('orderSuccess');
 
         return (
             <div>
@@ -139,6 +140,12 @@ class CartList extends React.Component{
                 <Spin indicator={antIcon} />
                 :
                 <div style={{ marginBottom: 16 }}>
+                    {orderSuccess ?
+                        <div>
+                            <p>Ваша корзина пуста </p>
+                        </div>
+                    :
+                    <div>
                     <span style={{ marginLeft: 8 }}>
                         {hasSelected ? `Выбрано ${selectedRowKeys.length} продуктов` : ''}
                     </span>
@@ -146,7 +153,10 @@ class CartList extends React.Component{
                         footer={() => `Итого: ${total}руб`}
                         />
                     <Button href="/my-order/" type="primary">Оформить заказ</Button>
+                    </div>
+                    }
                 </div>
+
                 }
             </div>
         );

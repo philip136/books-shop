@@ -1,4 +1,4 @@
-from django.urls import (path)
+from django.urls import path
 from .api.views import (ProductsApi,
                         TypeProductsApi,
                         ProductDetailApi,
@@ -12,6 +12,9 @@ from .api.views import (ProductsApi,
                         OrderRoomApi,
                         ProfileApi,
                         OrderRoomConnectApi,
+                        UserCreateApi,
+                        UserLogInApi,
+                        UserLogInRefreshApi
                         )
 
 
@@ -30,4 +33,7 @@ urlpatterns = [
     path("api/order-room/<int:pk>/", OrderRoomApi.as_view(), name="order-room"),
     path("api/profile/<int:pk>/", ProfileApi.as_view(), name='profile'),
     path("api/get-room/", OrderRoomConnectApi.as_view(), name='connect-to-room'),
+    path("api/token/obtain/", UserLogInApi.as_view(), name='token_create'),
+    path("api/token/refresh/", UserLogInRefreshApi.as_view(), name='token_refresh'),
+    path("api/create/user/", UserCreateApi.as_view(), name='create_user'),
 ]

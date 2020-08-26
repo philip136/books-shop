@@ -26,7 +26,7 @@ export const cartSuccess = (data) => {
 export const fetchCart = () => {
     return dispatch => {
         dispatch(cartStart());
-        authAxios()
+        authAxios
             .get(myCartUrl)
                 .then(res => {
                     dispatch(cartSuccess(res.data));

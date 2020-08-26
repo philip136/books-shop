@@ -7,6 +7,7 @@ from magazine.models import (Product,
                              Shop,
                              Profile,
                              RoomOrder)
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import status
 from django.contrib.gis.geos import (GEOSGeometry,fromstr)
 from django.http import HttpRequest
@@ -27,7 +28,12 @@ from magazine.api.serializer import (ProductSerializer,
                                      ProfileSerializer,
                                      OrderSerializer,
                                      LocationSerializer,
-                                     OrderRoomSerializer)
+                                     OrderRoomSerializer,
+                                     RegisterSerializer,
+                                     UserSerializerLogIn,
+                                     UserSerializerLogInRefresh)
+from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenViewBase
 from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
 from typing import Union
@@ -38,6 +44,34 @@ import datetime
 
 
 logger = logging.getLogger(__name__)
+
+
+class UserLogInApi(TokenViewBase):
+    serializer_class = UserSerializerLogIn
+
+
+class UserLogInRefreshApi(TokenViewBase):
+    serializer_class = UserSerializerLogInRefresh
+
+
+class UserCreateApi(APIView):
+    permission_classes = (AllowAny,)
+    serializer_class = RegisterSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            user = serializer.save(request)
+            if user:
+                refresh_token = RefreshToken.for_user(user)
+                lifetime_msec = refresh_token.lifetime * 60 * 1000
+                response = {
+                    "refresh": str(refresh_token),
+                    "access": str(refresh_token.access_token),
+                    "expiration": lifetime_msec
+                }
+                return Response(response, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TypeProductsApi(RetrieveAPIView):
@@ -233,10 +267,12 @@ class OrderRoomConnectApi(RetrieveAPIView):
     permission_classes = (IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
+        logger.info(request.data)
         username: str = request.data.get('username')
         order_room: RoomOrder = RoomOrder.objects.filter(
             participants__user__username__icontains=username
         ).first()
+        logger.info(order_room)
         if order_room is not None:
             return Response({'message': order_room.id}, status=status.HTTP_200_OK)
         return Response({'message': 'Текущих комнат нет'})
@@ -298,11 +334,11 @@ class OrderSuccessApi(CreateAPIView):
         if shop.is_working():
             delivery_type: str = order_data.get('purchase_type')
             self.operations_with_room(shop, delivery_type, order_data, customer)
-            return Response({"message":"Комната успешно создана"}, status=status.HTTP_200_OK)
+            return Response({"message": "Комната успешно создана"}, status=status.HTTP_200_OK)
         else:
             return Response({"message": "Простите но наш магазин уже закрыт, "
-                        "обратитесь позже мы работаем с 9:00 - 22:00 каждый день"}, 
-                        status=status.HTTP_200_OK)
+                             "обратитесь позже мы работаем с 9:00 - 22:00 каждый день"},
+                            status=status.HTTP_200_OK)
 
 
 

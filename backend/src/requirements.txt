@@ -23,6 +23,7 @@ django-google-maps==0.12.1
 django-phonenumbers==1.0.1
 django-rest-auth==0.9.5
 djangorestframework==3.11.0
+djangorestframework-simplejwt==4.4.0
 hiredis==1.0.1
 hyperlink==19.0.0
 idna==2.9
@@ -48,6 +49,7 @@ pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycparser==2.20
 PyHamcrest==2.0.2
+PyJWT==1.7.1
 pylint==2.4.4
 pyOpenSSL==19.1.0
 pyparsing==2.4.7

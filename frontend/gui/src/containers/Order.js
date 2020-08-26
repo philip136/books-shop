@@ -51,6 +51,7 @@ class OrderForm extends React.Component{
                 }
                 else {
                     localStorage.setItem('roomId', res.data.message['id']);
+                    localStorage.setItem('orderSuccess', true);
                     const roomId = localStorage.getItem('roomId');
                     this.props.history.push(`/map/${roomId}/`);
                 }
