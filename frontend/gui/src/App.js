@@ -1,11 +1,11 @@
 import React, {Component} from 'react';
 import 'antd/dist/antd.css';
-import CustomLayout from './containers/Layout';
+import CustomLayout from './_components/Layout';
 import BaseRouter from './routes';
 import {BrowserRouter as Router } from 'react-router-dom';
 import {connect} from 'react-redux';
-import * as actions from './store/actions/auth';
-import * as locationActions from './store/actions/orderRoom';
+import * as actions from './_store/actions/auth';
+import * as locationActions from './_store/actions/orderRoom';
 import './assets/style.css';
 import WebSocketInstance from "./websocket";
 

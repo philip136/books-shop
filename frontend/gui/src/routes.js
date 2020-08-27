@@ -1,13 +1,13 @@
 import React from 'react';
 import {Route} from 'react-router-dom';
-import ProductList from './containers/ProductList';
-import ProductDetail from './containers/ProductDetail';
-import Login from './containers/Login';
-import RegistrationForm from './containers/Signup';
-import CartList from './containers/CartList';
-import OrderForm from './containers/Order';
-import MapContainer from './containers/MapContainer';
-import ProductType from './containers/ProductType';
+import ProductList from './ProductListPage/ProductList';
+import ProductDetail from './_components/ProductDetail';
+import Login from './LoginPage/Login';
+import RegistrationForm from './SignUpPage/Signup';
+import CartList from './CartListPage/CartList';
+import OrderForm from './OrderPage/Order';
+import MapContainer from './MapPage/MapContainer';
+import ProductType from './_components/ProductType';
 
 
 const BaseRouter = () => (

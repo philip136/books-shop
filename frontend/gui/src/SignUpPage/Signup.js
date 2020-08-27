@@ -2,8 +2,8 @@ import React from 'react';
 import { Form, Input, Button, Spin } from 'antd';
 import { connect } from 'react-redux';
 import { NavLink, Redirect } from 'react-router-dom';
-import * as actions from '../store/actions/auth';
-import {antIcon, layout, tailLayout} from './Login';
+import * as actions from '../_store/actions/auth';
+import {antIcon, layout, tailLayout} from '../LoginPage/Login';
 
 
 

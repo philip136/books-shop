@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 import axios from 'axios';
 import {productTypeUrl} from "../constants";
 import {List, Card} from "antd";
-import Product from "../components/Product";
+import Product from "./Product";
 
 
 class ProductType extends Component{

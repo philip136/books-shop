@@ -1,6 +1,6 @@
 import React from 'react';
 import {Map as LeafletMap, TileLayer, Marker, Popup} from 'react-leaflet';
-import { iconPerson } from "../components/CustomMarker";
+import { iconPerson } from "../_components/CustomMarker";
 import WebSocketInstance from "../websocket";
 import {connect} from 'react-redux';
 import {Button} from "bootstrap-4-react/lib/components";

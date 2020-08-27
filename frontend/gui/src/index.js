@@ -3,13 +3,13 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 import {createStore, compose, applyMiddleware, combineReducers} from 'redux';
-import authReducer from './store/reducers/auth';
-import locationReducer from './store/reducers/orderRoom';
-import cartReducer from './store/reducers/cart';
+import authReducer from './_store/reducers/auth';
+import locationReducer from './_store/reducers/orderRoom';
+import cartReducer from './_store/reducers/cart';
 import thunkMiddleware from 'redux-thunk';
 import { Provider } from 'react-redux';
 import 'leaflet/dist/leaflet.css';
-import {jwt} from './store/middleware/jwt_middleware';
+import {jwt} from './_store/middleware/jwt_middleware';
 
 
 const composeEnhances = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;

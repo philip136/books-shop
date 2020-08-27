@@ -1,6 +1,6 @@
 import React from 'react';
 import { Form, Input, Button, Checkbox, Spin   } from 'antd';
-import * as actions from '../store/actions/auth';
+import * as actions from '../_store/actions/auth';
 import {connect} from 'react-redux';
 import { NavLink, Redirect } from 'react-router-dom';
 import { LoadingOutlined }from '@ant-design/icons';

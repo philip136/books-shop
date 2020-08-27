@@ -8,7 +8,7 @@ import {Button,
         Spin,
         InputNumber,
 } from 'antd';
-import { antIcon } from './Login';
+import { antIcon } from '../LoginPage/Login';
 import { authAxios } from '../utils';
 import { productDetailUrl, addToCartUrl } from '../constants';
 import { connect } from 'react-redux';

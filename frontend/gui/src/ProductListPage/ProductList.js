@@ -1,5 +1,5 @@
 import React,{Component} from 'react';
-import Product from '../components/Product';
+import Product from '../_components/Product';
 import axios from 'axios';
 import { List, Card} from 'antd';
 import {productListUrl} from "../constants";

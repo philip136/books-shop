@@ -1,6 +1,6 @@
 import React from "react";
 import {Button, Form, Input, Select} from "antd";
-import {withMyHook} from "./Login";
+import {withMyHook} from "../LoginPage/Login";
 import {orderUrl} from "../constants";
 import {authAxios} from '../utils';
 import { Alert } from 'antd';
