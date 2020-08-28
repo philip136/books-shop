@@ -22,7 +22,8 @@ def operation_with_cart(cart: Cart, item: CartItem, operation: str, **kwargs):
             cart.change_from_cart(count, item, cart)
     else: 
         if operation == "add_to_cart":
-            cart.add_to_cart(item, cart)
+            logger.info(item, cart)
+            cart.add_to_cart(item, cart, item.product)
 
 
 

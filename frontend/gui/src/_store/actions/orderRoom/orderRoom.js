@@ -1,7 +1,7 @@
-import * as actionTypes from './actionTypes';
+import * as actionTypes from '../actionTypes';
 import axios from 'axios';
-import {authAxios} from "../../utils";
-import {orderRoomUrl} from "../../constants";
+import {authAxios} from "../../../utils";
+import {orderRoomUrl} from "../../../constants";
 
 
 export const addLocation = location => {

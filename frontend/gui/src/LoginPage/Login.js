@@ -1,6 +1,6 @@
 import React from 'react';
 import { Form, Input, Button, Checkbox, Spin   } from 'antd';
-import * as actions from '../_store/actions/auth';
+import * as actions from '../_store/actions/auth/auth';
 import {connect} from 'react-redux';
 import { NavLink, Redirect } from 'react-router-dom';
 import { LoadingOutlined }from '@ant-design/icons';
@@ -16,6 +16,7 @@ export const layout = {
     span: 16,
   },
 };
+
 export const tailLayout = {
   wrapperCol: {
     offset: 8,

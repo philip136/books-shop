@@ -7,6 +7,7 @@ from magazine.models import (Cart,
                             Profile,
                             CartItem,
                             Product)
+from rest_framework import status
 from django.contrib.auth.models import User
 from returns.pipeline import is_successful
 from returns.result import Result, Success, Failure
@@ -27,11 +28,12 @@ def serializer_validate(serializer_class, instance):
             serializer = serializer_class(instance=instance, data=request.data)
             if serializer.is_valid():
                 data = serializer.data
-                logger.debug(data)
                 return function(request, serializer_data=data)
+            logger.warning(serializer.errors)
             return Response({
-                "message": "Проверьте правильность введенных данных"
-            })
+                "message": "Проверьте правильность введенных данных"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         return wrapper
     return serializer_decorator
 
@@ -49,6 +51,7 @@ def item_exist(product: Product, count: int, cart: Cart, operation: str):
             product_total=product_total
         )
         item.save()
+    logger.info(f'{item=}')
     operation_with_cart(cart, item, operation, count=count)
 
 
@@ -62,6 +65,7 @@ def operations_with_cart(operation: str):
             user: User = request.user
             profile: Profile = Profile.objects.get(user=user)
             cart: Cart = Cart.objects.filter(owner=profile).first()
+            logger.info(f'{cart=}')
             if cart is None:
                 cart: Cart = Cart.objects.create(owner=profile,cart_total=Decimal(0.00))
                 cart.save()
@@ -69,6 +73,7 @@ def operations_with_cart(operation: str):
             if request.method == "POST" or request.method == "PUT":
                 product: Product = Product.objects.get(name=request.data.get('product_name'))
                 count: int = request.data.get('count')
+                logger.info(f'{count=}')
                 item_exist(product, count, cart, operation)
 
             if request.method == "DELETE":

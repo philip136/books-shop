@@ -1,6 +1,6 @@
-import * as actionTypes from './actionTypes';
+import * as actionTypes from '../actionTypes';
 import axios from 'axios';
-import {registrationUrl, loginUrl, refreshTokenUrl} from "../../constants";
+import {registrationUrl, loginUrl, refreshTokenUrl} from "../../../constants";
 
 
 export const authStart = () => {

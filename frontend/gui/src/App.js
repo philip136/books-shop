@@ -4,8 +4,8 @@ import CustomLayout from './_components/Layout';
 import BaseRouter from './routes';
 import {BrowserRouter as Router } from 'react-router-dom';
 import {connect} from 'react-redux';
-import * as actions from './_store/actions/auth';
-import * as locationActions from './_store/actions/orderRoom';
+import * as actions from './_store/actions/auth/auth';
+import * as locationActions from './_store/actions/orderRoom/orderRoom';
 import './assets/style.css';
 import WebSocketInstance from "./websocket";
 

@@ -1,4 +1,4 @@
-import {refreshToken} from "../actions/auth";
+import {refreshToken} from '../actions/auth/auth';
 
 export const jwt = ({dispatch, getState}) => {
     return (next) => (action) => {

@@ -3,7 +3,7 @@ import { authAxios } from '../utils';
 import { myCartUrl, deleteCartItemUrl, updateCartItemUrl } from '../constants';
 import { connect } from 'react-redux';
 import {Table, Button, Spin, message, Form, Input} from 'antd';
-import * as actions from '../_store/actions/auth';
+import * as actions from '../_store/actions/auth/auth';
 import { DeleteOutlined,LoadingOutlined,EditOutlined } from '@ant-design/icons';
 import { Redirect } from "react-router-dom";
 

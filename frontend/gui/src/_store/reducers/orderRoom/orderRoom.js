@@ -1,5 +1,5 @@
-import {updateObject} from "../utillity";
-import * as actionTypes from '../actions/actionTypes';
+import {updateObject} from '../../utillity';
+import * as actionTypes from '../../actions/actionTypes';
 
 const initialState = {
     locations: [],

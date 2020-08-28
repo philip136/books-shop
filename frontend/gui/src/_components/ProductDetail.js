@@ -1,124 +1,157 @@
-import React from 'react';
-import axios from 'axios';
+import React, {useState} from 'react';
 import {Button,
         Col,
         Row,
         Form,
-        message,
         Spin,
-        InputNumber,
+        Input,
 } from 'antd';
 import { antIcon } from '../LoginPage/Login';
-import { authAxios } from '../utils';
-import { productDetailUrl, addToCartUrl } from '../constants';
 import { connect } from 'react-redux';
 import { Redirect } from "react-router-dom";
+import * as cartActions from '../_store/actions/cart/cart';
+
+
+const mapState = (state) => {
+    return {token: state.auth.token,
+            loading: state.cart.loading,
+            message: state.cart.message,
+            product: state.cart.product
+        }
+};
+
+const mapDispatch = (dispatch) => ({
+    addProduct: async (productId, productName, productCount) => dispatch(
+        cartActions.addProductToCart(productId, productName, productCount)
+    ),
+    getProduct: async (productId) => dispatch(
+        cartActions.fetchProduct(productId)
+    ),
+});
+
+const connector = connect(mapState, mapDispatch);
+
+
+const CountProductInput = ({value = {}, onChange}) => {
+    const [number, setNumber] = useState(0);
+    
+    const triggerChange = (changedValue) => {
+        if (onChange) {
+            onChange({
+                number,
+                ...value,
+                ...changedValue,
+            });
+        }
+    };
+
+    const onNumberChange = (e) => {
+        const newNumber = parseInt(e.target.value || 0, 10);
+
+        if (Number.isNaN(number)) {
+            return;
+        }
+
+        if (!('number' in value)) {
+            setNumber(newNumber);
+        }
+
+        triggerChange({
+            number: newNumber
+        });
+    };
+
+    return (
+        <span>
+            <Input
+                type='text'
+                value={value.number || number}
+                onChange={onNumberChange}
+                style={{ width: 100}}
+            /> 
+        </span> 
+    );
+};
 
 
 class ProductDetail extends React.Component{
-    state = {
-        loading: false,
-        error: null,
-        data: [],
-        count: {}
-    };
-
     componentDidMount() {
-        this.handleFetchItem();
-    }
-
-    handleFetchItem = () => {
-        const {
-            match: {params}
-        } = this.props;
-        this.setState({loading: true});
-        axios
-            .get(productDetailUrl(params.productId))
-                .then(res => {
-                    this.setState({data: res.data, loading: false});
-                })
-                .catch(err => {
-                    this.setState({error: err, loading: false})
-                });
+        const productId = this.props.match.params.productId;
+        this.handleFetchItem(productId);
     };
 
-    handleAddToCart = (product) => {
-        const id = this.props.match.params.productId;
-        this.setState({ loading: true });
-        
-        authAxios()
-            .post(addToCartUrl(id), { 
-                product_name: product.name,
-                count: this.state.count
-            })
-            .then(res => {
-                this.handleFetchItem()
-                message.success(res.data.message)    
-            })
-            .catch(err => {
-                this.setState({error: err});
-                message.error(err);
-            });
+    handleFetchItem = (productId) => {
+        this.props.getProduct(productId);
     };
 
-    handleChange = (value) => {
-        this.setState({
-            count: value
-        })
+    onFinish = (values) => {
+        const productId = this.props.match.params.productId;
+        const productName = this.props.product.name;
+        this.props.addProduct(productId, productName, values.count.number);
     };
 
-    componentDidUpdate(prevProps, prevState){
-        if (prevState.data !== this.state.data){
-            this.setState({
-                data: this.state.data
-            });
-        }
-    }
 
+    checkCount = (rule, value) => {
+        if (value.number > 0) {
+            return Promise.resolve();
+        } 
+        return Promise.reject("Количество товаров должно быть больше 0");
+    };
 
     render(){
          if (this.props.token === null){
             return <Redirect to="/login/" />;
          }
 
-        const {loading, data} = this.state
-        const item = data;
+        const {loading, product} = this.props; 
 
         return (
         <div className="site-card-wrapper">
-            {
-                loading ? 
+            {loading && (
                 <Spin indicator={antIcon} />
+            )}
+            {product && (
+                        <Row gutter={[48]}>
+                        <Col span={10}>
+                            <img className='product-img' src={product.image}></img>
+                        </Col>
+                        <Col span={4}></Col>
+                        <Col span={8}>
+                        <div className="product-info">
+                            <h3>{product.name}</h3>
+                            <p className="price">Цена: {product.price} BYN </p>
+                            <p className="count">Количество: {product.count} </p>
 
-                :
-                <Row gutter={[48]}>
-                    <Col span={10}>
-                        <img className='product-img' src={this.state.data.image}></img>
-                    </Col>
-                    <Col span={4}></Col>
-                    <Col span={8}>
-                     <div className="product-info">
-                        <h3>{this.state.data.name}</h3>
-                        <p className="price">Цена: {this.state.data.price } BYN </p>
-                        <p className="count">Количество: {this.state.data.count} </p>
-
-                        <Form onFinish={() => this.handleAddToCart(item)}>
-                            <Form.Item
-                                rules={[
-                                    {
-                                        required: true,
-                                        message: "Введите количество продуктов которые вы хотите купить"
+                            <Form
+                                layout='inline'
+                                onFinish={this.onFinish}
+                                initialValues={{
+                                    count: {
+                                        number: 0
                                     },
-                                ]}>
-                                <InputNumber min={1} max={this.state.data.count} onChange={this.handleChange} />
-                            </Form.Item>
-                            <Button type='primary' style={{marginTop: '30px'}} htmlType="submit">
-                                Купить
-                            </Button>
-                        </Form>
-                      </div>
-                  </Col>
-                </Row>
+                                }}
+                            >
+                                <Form.Item
+                                    name="count"
+                                    label="Количество"
+                                    rules={[
+                                        {
+                                            validator: this.checkCount,
+                                        },
+                                    ]}
+                                >
+                                    <CountProductInput />
+                                </Form.Item>
+                                <Form.Item>
+                                    <Button type="primary" htmlType="submit">
+                                        Купить
+                                    </Button>
+                                </Form.Item>
+                            </Form>
+                        </div>
+                    </Col>
+                    </Row>
+                    )
                 }
             </div>
         );
@@ -126,12 +159,5 @@ class ProductDetail extends React.Component{
 
 }
 
-
-const mapStateToProps = (state) => {
-    return {
-        token: state.auth.token
-    }
-}
-
-
-export default connect(mapStateToProps)(ProductDetail);
+const connectedProductDetail = connector(ProductDetail);
+export default connectedProductDetail;

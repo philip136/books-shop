@@ -5,6 +5,10 @@ from django.contrib.auth.models import User
 from django.contrib.gis.db import models as models_gis
 import datetime
 import math
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class TypeProduct(models.Model):
@@ -41,9 +45,16 @@ class Product(models.Model):
     def get_count(self):
         return self.count
     
+    # Change instance count , need change on class level
     @get_count.setter
     def get_count(self, new_count):
         self.count = new_count
+        self.save()
+
+    @classmethod
+    def change_count(cls, new_count):
+        cls.count = new_count
+        return cls.count
 
 
 class Profile(models.Model):
@@ -64,7 +75,7 @@ class Profile(models.Model):
     @get_busy.setter
     def get_busy(self, state):
         self.busy = state
-
+    
 
 class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -91,11 +102,14 @@ class Cart(models.Model):
     def __str__(self):
         return f'Корзина пользователя {self.owner.user.username}'
 
-    def add_to_cart(self, cart_item, cart):
+    def add_to_cart(self, cart_item, cart, product):
         if cart_item not in cart.products.all():
             cart.products.add(cart_item)
             cart.cart_total += cart_item.product_total
+            product.count -= cart_item.count
+            product.save()
             cart.save()
+           
 
     def remove_from_cart(self, product, cart):
         for cart_item in cart.products.all():
