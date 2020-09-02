@@ -26,6 +26,7 @@ def serializer_validate(serializer_class, instance):
     def serializer_decorator(function: None, **kwargs):
         def wrapper(request: HttpRequest, *args, **kwargs):
             serializer = serializer_class(instance=instance, data=request.data)
+            logger.info(request.data)
             if serializer.is_valid():
                 data = serializer.data
                 return function(request, serializer_data=data)

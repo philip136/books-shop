@@ -24,21 +24,17 @@ export const tailLayout = {
   },
 };
 
-export const withMyHook = (Component) =>{
-  return function WrappedComponent(props) {
-    const [form] = Form.useForm();
-    return <Component {...props} form={form} />;
-  }
-}
 
 
 class NormalLoginForm extends React.Component{
+  formRef = React.createRef();
+
   onFinish = (value) => {
     this.props.onAuth(value.username, value.password);
   }
 
   render(){
-      const {token, error, form, loading} = this.props;
+      const {token, error, loading} = this.props;
 
       if (token !== null){
         return (<Redirect to='/' />)
@@ -52,6 +48,7 @@ class NormalLoginForm extends React.Component{
       }
       
       return (
+
         <div>
           {errorMessage}
            {
@@ -59,7 +56,7 @@ class NormalLoginForm extends React.Component{
              <Spin indicator={antIcon} />
              
             :
-            <Form {...layout} form={form} onFinish={this.onFinish} >
+            <Form {...layout} ref={this.formRef} onFinish={this.onFinish} >
               <Form.Item
                 label="Имя пользователя"
                 name="username"
@@ -107,7 +104,6 @@ class NormalLoginForm extends React.Component{
     }
 }
 
-const wrappedForm = withMyHook(NormalLoginForm);
 
 const mapStateToProps = (state) => {
     return {
@@ -123,4 +119,4 @@ const mapDispatchToProps = dispatch => {
     }
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(wrappedForm);
+export default connect(mapStateToProps, mapDispatchToProps)(NormalLoginForm);

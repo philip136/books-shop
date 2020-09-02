@@ -9,9 +9,10 @@ export function fetchCart(username){
     return async dispatch => {
         dispatch(request());
         try {
-            const myCart = await (authAxios.get(myCartUrl(username)));
+            const myCart = await (authAxios().get(myCartUrl(username)));
             const response = myCart.data
             dispatch(succes(response));
+            return response;
         } catch (err) {
             dispatch(failure(err.message));
         }
@@ -64,7 +65,7 @@ export function addProductToCart(productId, productName, productCount){
                 count: productCount});
             const messageResponse = purchasedProduct.data;
             dispatch(success(messageResponse));
-            dispatch(fetchProduct(productId));
+            window.location.reload(false);
         } catch(err) {
             dispatch(failure(err));
         }
@@ -87,9 +88,10 @@ export function removeProductFromCart(productId){
     return async dispatch => {
         dispatch(request());
         try {
-            const removedProduct = await (authAxios.delete(deleteCartItemUrl(productId)));
+            const removedProduct = await (authAxios().delete(deleteCartItemUrl(productId)));
             const messageResponse = removedProduct.data.message;
             dispatch(success(messageResponse));
+            window.location.reload(false);
         } catch(err) {
             dispatch(failure(err.message));
         }
@@ -108,16 +110,19 @@ export function removeProductFromCart(productId){
     }
 };
 
-export function updateProductInCart(productId, newCountProduct) {
+export function updateProductInCart(productId, productName, newCountProduct) {
     return async dispatch => {
         dispatch(request());
         try {
-            const updatedProduct = await (authAxios.put(updateCartItemUrl(productId)),
-                {newCountProduct}
-            )
+            const requestData = {
+                product_name: productName,
+                count: newCountProduct
+            };
+            const updatedProduct = await (authAxios().put(updateCartItemUrl(productId),
+                requestData))
             const messageResponse = updatedProduct.data.message;
             dispatch(success(messageResponse));
-
+            window.location.reload(false);
         } catch (err) {
             dispatch(failure(err.message));
         }

@@ -121,11 +121,14 @@ class Cart(models.Model):
                 cart_item.delete()
                 cart.save()
     
-    def change_from_cart(self, count, cart_item, cart):
-        difference = cart_item.count - int(count)
-        if difference < 0:
-            difference = math.fabs(difference)  
-        cart_item.product.count += difference
+    def change_from_cart(self, count, cart_item, product, cart):
+        difference: int = cart_item.count - int(count)
+        # if difference between old buy and new buy < 0, then count product increased
+        # was 2 product count, now 3 product count => then diff = -1
+
+        product.count += difference
+        product.save()
+        
         cart_item.count = int(count)
         cart_item.product_total = int(count) * cart_item.product.price
         cart_item.save()

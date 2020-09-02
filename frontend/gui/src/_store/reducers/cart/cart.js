@@ -73,6 +73,7 @@ const requestUpdateInCart = (state, action) => {
     return updateObject(state, {
         error: null,
         loading: true,
+        confirming: false,
     });
 };
 
@@ -81,7 +82,8 @@ const successUpdateInCart = (state, action) => {
         confirming: true,
         declining: false,
         loading: false,
-        message: action.message
+        message: action.message,
+        cart: action.cart
     });
 };
 

@@ -28,7 +28,7 @@ class ProductType extends Component{
 
      componentWillReceiveProps(newProps){
         if (this.props.match.params.productType !== newProps.match.params.productType){
-            window.location.reload();
+            // need change
         }
      }
 

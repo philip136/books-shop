@@ -2,6 +2,8 @@ import {updateObject} from '../../utillity';
 import * as actionTypes from '../../actions/actionTypes';
 
 const initialState = {
+    orderSuccess: false,
+    error: null,
     locations: [],
     room: []
 };
@@ -20,7 +22,8 @@ const setLocations = (state, action) => {
 
 const setRoom = (state, action) => {
     return updateObject(state, {
-        room: action.room
+        room: action.room,
+        orderSuccess: true
     });
 };
 

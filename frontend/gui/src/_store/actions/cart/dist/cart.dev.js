@@ -33,7 +33,7 @@ function fetchCart(username) {
             dispatch(request());
             _context.prev = 1;
             _context.next = 4;
-            return regeneratorRuntime.awrap(_utils.authAxios.get((0, _constants.myCartUrl)(username)));
+            return regeneratorRuntime.awrap((0, _utils.authAxios)().get((0, _constants.myCartUrl)(username)));
 
           case 4:
             myCart = _context.sent;
@@ -218,7 +218,7 @@ function removeProductFromCart(productId) {
             dispatch(request());
             _context4.prev = 1;
             _context4.next = 4;
-            return regeneratorRuntime.awrap(_utils.authAxios["delete"]((0, _constants.deleteCartItemUrl)(productId)));
+            return regeneratorRuntime.awrap((0, _utils.authAxios)()["delete"]((0, _constants.deleteCartItemUrl)(productId)));
 
           case 4:
             removedProduct = _context4.sent;
@@ -275,7 +275,7 @@ function updateProductInCart(productId, newCountProduct) {
             dispatch(request());
             _context5.prev = 1;
             _context5.next = 4;
-            return regeneratorRuntime.awrap((_utils.authAxios.put((0, _constants.updateCartItemUrl)(productId)), {
+            return regeneratorRuntime.awrap(((0, _utils.authAxios)().put((0, _constants.updateCartItemUrl)(productId)), {
               newCountProduct: newCountProduct
             }));
 

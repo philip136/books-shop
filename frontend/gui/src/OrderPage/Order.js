@@ -1,6 +1,5 @@
 import React from "react";
 import {Button, Form, Input, Select} from "antd";
-import {withMyHook} from "../LoginPage/Login";
 import {orderUrl} from "../constants";
 import {authAxios} from '../utils';
 import { Alert } from 'antd';
@@ -27,6 +26,7 @@ const tailLayout = {
 
 
 class OrderForm extends React.Component{
+    formRef = React.createRef()
     state = {
         loading: false,
         message: null,
@@ -51,10 +51,10 @@ class OrderForm extends React.Component{
                 }
                 else {
                     localStorage.setItem('roomId', res.data.message['id']);
-                    localStorage.setItem('orderSuccess', true);
                     const roomId = localStorage.getItem('roomId');
                     this.props.history.push(`/map/${roomId}/`);
                 }
+                localStorage.setItem('orderSuccess', true);
             })
             .catch(err => {
                 if (err.response.status === 400){
@@ -66,8 +66,6 @@ class OrderForm extends React.Component{
     };
 
     render(){
-        const form = this.props.form;
-
         return (
             <div>
                 { this.state.showMessage ?
@@ -75,7 +73,7 @@ class OrderForm extends React.Component{
                     :
                     null
                 }
-                <Form {...layout} form={form} onFinish={this.handleCheckout}>
+                <Form {...layout} ref={this.formRef} onFinish={this.handleCheckout}>
                     <Form.Item {...tailLayout}
                         label="Ваше имя"
                         name="first_name"
@@ -140,15 +138,13 @@ class OrderForm extends React.Component{
     }
 }
 
-const order = withMyHook(OrderForm)
-
 const mapStateToProps = state => {
     return {
         token: state.auth.token,
     }
 }
 
-export default connect(mapStateToProps)(order);
+export default connect(mapStateToProps)(OrderForm);
 
 
 

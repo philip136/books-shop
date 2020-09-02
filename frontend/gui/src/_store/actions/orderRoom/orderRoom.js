@@ -1,5 +1,4 @@
 import * as actionTypes from '../actionTypes';
-import axios from 'axios';
 import {authAxios} from "../../../utils";
 import {orderRoomUrl} from "../../../constants";
 
@@ -29,7 +28,12 @@ export const getUserRoom = (id) => {
     return dispatch => {
         authAxios()
         .get(orderRoomUrl(id))
-        .then(res => dispatch(getUserRoomSuccess(res.data)));
+        .then(res => {
+            dispatch(getUserRoomSuccess(res.data));
+        })
+        .catch(err => {
+            console.log(err);
+        });
     };
 };
 
