@@ -26,11 +26,22 @@ class ProductType extends Component{
             })
     }
 
-     componentWillReceiveProps(newProps){
-        if (this.props.match.params.productType !== newProps.match.params.productType){
-            // need change
+    componentDidUpdate(prevProps) {
+        if (this.props.match.params.productType !== prevProps.match.params.productType) {
+            const newSlug = this.props.match.params.productType;
+            axios.get(productTypeUrl(newSlug))
+                .then(res => {
+                    this.setState({
+                        products: res.data
+                    });
+                })
+                .catch(err => {
+                    this.setState({
+                        error: err
+                    });
+                })
         }
-     }
+    }
 
     render() {
         return (

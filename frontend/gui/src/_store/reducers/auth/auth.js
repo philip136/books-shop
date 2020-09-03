@@ -2,13 +2,13 @@ import * as actionTypes from '../../actions/actionTypes';
 import {updateObject} from '../../utillity';
 
 const initialState = {
-    token: null,
-    refreshToken: null,
+    token: localStorage.getItem('token'),
+    refreshToken: localStorage.getItem('refreshToken'),
     error: null,
     loading: false,
-    username: null,
-    expirationDate: null,
-    is_staff: null,
+    username: localStorage.getItem('username'),
+    expirationDate: localStorage.getItem('expirationDate'),
+    is_staff: localStorage.getItem('is_staff'),
     refreshingPromise: null
 }
 

@@ -22,18 +22,12 @@ class App extends Component {
     return (
       <div>
         <Router>
-          <CustomLayout {...this.props}>
+          <CustomLayout>
             <BaseRouter />
           </CustomLayout>
         </Router>
       </div>
     );
-  }
-}
-
-const mapStateToProps = state => {
-  return {
-    isAuthenticated: !!state.auth.token
   }
 }
 
@@ -44,4 +38,4 @@ const mapDispatchToProps = dispatch => {
   };
 };
 
-export default connect(mapStateToProps, mapDispatchToProps)(App);
+export default connect(mapDispatchToProps)(App);

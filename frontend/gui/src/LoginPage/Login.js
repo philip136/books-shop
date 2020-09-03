@@ -27,7 +27,7 @@ export const tailLayout = {
 
 
 class NormalLoginForm extends React.Component{
-  formRef = React.createRef();
+  static formRef = React.createRef();
 
   onFinish = (value) => {
     this.props.onAuth(value.username, value.password);

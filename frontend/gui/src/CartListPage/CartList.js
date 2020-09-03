@@ -147,6 +147,7 @@ class CartList extends React.Component {
         })
     }
 
+   
     isEditing = (record) => record.key === this.state.editingKey
 
     editCountField = (record) => {
@@ -166,6 +167,13 @@ class CartList extends React.Component {
         this.setState({editingKey: ''});
     }
 
+    componentDidUpdate(prevProps) {
+        if (this.props.cart && prevProps.cart && (this.props.cart.products !== prevProps.cart.products)){
+            console.log(this.props.cart.products);
+        }
+    }
+
+
     saveEdit = async (key) => {
         const form = this.formRef.current;
         try {
@@ -176,6 +184,7 @@ class CartList extends React.Component {
             const newCount = row.count;
             const productId = key;
             this.props.updateProduct(productId, productName, newCount);
+            this.setState({editingKey: ''});
         } catch (err) {
             console.log("Данные введены некорректно");
         }

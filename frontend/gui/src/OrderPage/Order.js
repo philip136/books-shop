@@ -26,7 +26,7 @@ const tailLayout = {
 
 
 class OrderForm extends React.Component{
-    formRef = React.createRef()
+    static formRef = React.createRef();
     state = {
         loading: false,
         message: null,

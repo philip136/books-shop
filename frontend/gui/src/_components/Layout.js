@@ -144,7 +144,8 @@ const CustomLayout = (props) => {
 
 const mapStateToProps = state => {
     return {
-        username: state.auth.username
+        username: state.auth.username,
+        isAuthenticated: !!state.auth.token
     };
 };
 
