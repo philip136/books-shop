@@ -11,7 +11,6 @@ import { connect } from 'react-redux';
 import { Redirect } from "react-router-dom";
 import * as cartActions from '../_store/actions/cart/cart';
 
-
 const mapState = (state) => {
     return {token: state.auth.token,
             loading: state.cart.loading,
@@ -118,11 +117,11 @@ class ProductDetail extends React.Component{
                         <Col span={4}></Col>
                         <Col span={8}>
                         <div className="product-info">
-                            <h3>{product.name}</h3>
-                            <p className="price">Цена: {product.price} BYN </p>
-                            <p className="count">Количество: {product.count} </p>
+                            <h3 id="productTitle">{product.name}</h3>
+                            <p id="productPrice">Цена: {product.price} BYN </p>
 
                             <Form
+                                class='product-form'
                                 layout='inline'
                                 onFinish={this.onFinish}
                                 initialValues={{
@@ -133,6 +132,7 @@ class ProductDetail extends React.Component{
                             >
                                 <Form.Item
                                     name="count"
+                                    id="productCount"
                                     label="Количество"
                                     rules={[
                                         {

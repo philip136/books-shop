@@ -1,8 +1,11 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import {Table, Button, Spin, message, Form, Input, InputNumber, Popconfirm} from 'antd';
+import {Table, Button, Spin,
+message,Result, Form, Input, InputNumber, Popconfirm} from 'antd';
 import * as cartActions from '../_store/actions/cart/cart';
 import {antIcon} from '../LoginPage/Login';
+import { SmileOutlined } from '@ant-design/icons';
+
 
 const mapState = (state) => {
     return {
@@ -11,7 +14,6 @@ const mapState = (state) => {
         loading: state.cart.loading,
         message: state.cart.message,
         cart: state.cart.cart,
-        product: state.cart.product,
         error: state.cart.error,
         loading: state.cart.loading,
         confirming: state.cart.confirming,
@@ -71,18 +73,20 @@ const EditableCell = ({
 };
 
 
+
+
 class CartList extends React.Component {
     formRef =  React.createRef();
     constructor(props) {
         super(props);
         this.state = {
-            data: [],
             editingKey: '',
             columns: [
                 {title: 'Продукт', render: (record) => record.name},
                 {title: 'Количество', dataIndex: 'count', editable: true},
                 {title: 'Стоимость', render: (record) =>  record.price},
                 {title: 'Изменить', render: (_, record) => {
+                    console.log(record);
                     const editable = this.isEditing(record);
                     return editable ? (
                         <span>
@@ -111,43 +115,35 @@ class CartList extends React.Component {
                  }
               },
               {title: 'Удалить', render: (text, record) => {
-                return (this.state.data.length >= 1 ? (
-                    <Popconfirm
-                        title='Вы действительно хотите удалить?'
-                        cancelText="Нет"
-                        okText="Да"
-                        onConfirm={() => this.handleDelete(record.key)}
-                    >
-                       <a> Удалить </a> 
-                    </Popconfirm>
-                ) : null
+                return (
+                    this.props.cart && (
+                        this.props.cart.products.length >= 1 ? (
+                            
+                            <Popconfirm
+                                title='Вы действительно хотите удалить?'
+                                cancelText="Нет"
+                                okText="Да"
+                                onConfirm={() => this.handleDelete(record.key)}
+                            >
+                               <a> Удалить </a> 
+                            </Popconfirm>
+                        ) : null
+                    )
                 );
               }
             },
             ],
+        orderSuccess: false,
         };
     }
 
     componentDidMount() {
-        const actionFetch = this.props.fetchCart(this.props.username);
-        actionFetch
-        .then((res) => {
-            const cartData = res.products.map(product => {
-                return {
-                    key: product.id.toString(),
-                    count: product.count,
-                    price: product.product_total,
-                    name: product.product.name
-                };
-            })
-            this.setState({data: cartData})
-        })
-        .catch((err) => {
-            console.log(err);
-        })
+        this.props.fetchCart(this.props.username);
+        const orderSuccess = localStorage.getItem('orderSuccess');
+        this.setState({
+            orderSuccess: orderSuccess
+        });
     }
-
-   
     isEditing = (record) => record.key === this.state.editingKey
 
     editCountField = (record) => {
@@ -156,7 +152,9 @@ class CartList extends React.Component {
             count: '',
             ...record,
         });
-        this.setState({editingKey: record.key});
+        this.setState({
+            editingKey: record.key,
+        });
     };
 
     handleDelete = (key) => {
@@ -167,19 +165,16 @@ class CartList extends React.Component {
         this.setState({editingKey: ''});
     }
 
-    componentDidUpdate(prevProps) {
-        if (this.props.cart && prevProps.cart && (this.props.cart.products !== prevProps.cart.products)){
-            console.log(this.props.cart.products);
-        }
-    }
-
-
     saveEdit = async (key) => {
         const form = this.formRef.current;
         try {
+            console.log(key);
             const row = await (form.validateFields());
             const productName = this.props.cart.products.map(product => {
-                if (product.id.toString() === key) {return product.product.name}
+                if (product.id === key) 
+                    {
+                        return product.product_name
+                    }
             })[0]
             const newCount = row.count;
             const productId = key;
@@ -190,10 +185,26 @@ class CartList extends React.Component {
         }
     };
 
+    insertToDataTable = (products) => {
+        const data = []
+        products.map(p => {
+            const product =  {
+                key: p.id,
+                name: p.product_name,
+                price: p.product_total,
+                count: p.count
+            };
+            data.push(product);
+        });
+        return data;
+    }
 
     render() {
-        const {data, columns} = this.state;
+        const {cart} = this.props;
+        const {columns} = this.state;
         const {loading} = this.props;
+        const orderSuccess = JSON.parse(localStorage.getItem('orderSuccess'));
+
         const mergedColumns = columns.map(col => {
             if (!col.editable) {
                 return col;
@@ -212,30 +223,36 @@ class CartList extends React.Component {
         })
 
         return (
+
             <div>
-                {loading ? (
-                    <Spin indicator={antIcon} />
+
+                {orderSuccess ? (
+                    <Result
+                        icon={<SmileOutlined />}
+                        title="Ваша корзина пуста, так как вы уже оформили заказ"
+                        extra={<Button href='/' type="primary">Вернуться</Button>}
+                    />
                 ) :
-                mergedColumns && (
-                    <Form ref={this.formRef} component={false}>
-                        <Table
+                (cart &&
+                    (<Form ref={this.formRef} component={false}>
+                            <Table
                             components={{
                                 body: {
                                     cell: EditableCell
                                 },
                             }}
                             bordered
-                            dataSource={data}
+                            dataSource={this.insertToDataTable(cart.products)}
                             columns={mergedColumns}
                             rowClassName="editable-row"
                             pagination={{
                                 onChange: this.cancelEdit,
                             }}
                         />
-                        <Button href="/my-order/" type="primary">Оформить заказ</Button> 
-                    </Form>
+                        <Button href="/my-order/" type="primary">Оформить заказ</Button>
+                    </Form>)
                 )
-                }       
+               }
             </div>
         );
     }

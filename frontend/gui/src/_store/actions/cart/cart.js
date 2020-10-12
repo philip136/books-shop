@@ -11,7 +11,7 @@ export function fetchCart(username){
         try {
             const myCart = await (authAxios().get(myCartUrl(username)));
             const response = myCart.data
-            dispatch(succes(response));
+            dispatch(success(response));
             return response;
         } catch (err) {
             dispatch(failure(err.message));
@@ -22,7 +22,7 @@ export function fetchCart(username){
         return {type: actionTypes.REQUEST_CART};
     };
 
-    function succes(cart) {
+    function success(cart) {
         return {type: actionTypes.SUCCESS_CART, cart};
     };
 
@@ -91,7 +91,7 @@ export function removeProductFromCart(productId){
             const removedProduct = await (authAxios().delete(deleteCartItemUrl(productId)));
             const messageResponse = removedProduct.data.message;
             dispatch(success(messageResponse));
-            window.location.reload(false);
+            dispatch(fetchCart(localStorage.getItem('username')));      
         } catch(err) {
             dispatch(failure(err.message));
         }
@@ -122,7 +122,7 @@ export function updateProductInCart(productId, productName, newCountProduct) {
                 requestData))
             const messageResponse = updatedProduct.data.message;
             dispatch(success(messageResponse));
-            window.location.reload(false);
+            dispatch(fetchCart(localStorage.getItem('username')));
         } catch (err) {
             dispatch(failure(err.message));
         }

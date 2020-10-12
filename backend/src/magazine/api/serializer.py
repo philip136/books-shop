@@ -27,8 +27,8 @@ logger = logging.getLogger(__name__)
 
 class UserSerializerLogIn(TokenObtainPairSerializer):
     """
-        Custom Obtain token append username, expirationDate for access token
-        and status_staff for permissions routes
+    Custom Obtain token append username, expirationDate for access token
+    and status_staff for permissions routes
     """
     def validate(self, attrs):
         data = super().validate(attrs)
@@ -41,7 +41,7 @@ class UserSerializerLogIn(TokenObtainPairSerializer):
 
 class UserSerializerLogInRefresh(TokenRefreshSerializer):
     """
-        Custom Refresh token append expirationDate field
+    Custom Refresh token append expirationDate field
     """
     def validate(self, attrs):
         data = super().validate(attrs)
@@ -50,6 +50,9 @@ class UserSerializerLogInRefresh(TokenRefreshSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
+    """
+    Serializer fields for registration
+    """
     email = serializers.EmailField(required=allauth_settings.EMAIL_REQUIRED)
     first_name = serializers.CharField(required=True, write_only=True)
     last_name = serializers.CharField(required=True, write_only=True)
@@ -106,23 +109,16 @@ class RegisterSerializer(serializers.ModelSerializer):
         return instance
 
 
-class TypeProductSerializer(serializers.ModelSerializer):
-    image = serializers.ImageField(max_length=None, use_url=True)
-
-    class Meta:
-        model = Product
-        fields = [
-            'id',
-            'name',
-            'price',
-            'delivery_time',
-            'image',
-            'count',
-            'type',
-        ]
-
-
 class ProductSerializer(serializers.ModelSerializer):
+    """
+    Serializer fields: 
+    image: image for product, 
+    price: price for product,
+    name: product name,
+    delivery_time,
+    count: total count in stock,
+    type: type of product (notebook, book, calendar, etc.)
+    """
     image = serializers.ImageField(max_length=None, use_url=True)
     price = serializers.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     
@@ -139,7 +135,19 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
 
 
+class TypeProductSerializer(ProductSerializer):
+    """
+    Serializer Product only finding by type product
+    """
+
+
 class CartItemSerializer(serializers.ModelSerializer):
+    """
+    Serializer fields:
+    product name
+    count: count for one product in a cart
+    product_total: price for (product * count)
+    """
     product_name = serializers.CharField(source='product.name')
     count = serializers.IntegerField()
     product_total = serializers.DecimalField(max_digits=9, decimal_places=2, default=0.00)
@@ -147,6 +155,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = [
+            'id',
             'product_name',
             'count',
             'product_total'
@@ -164,6 +173,11 @@ class CartItemSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    """
+    Serializer fields:
+    user: return username for user,
+    busy: user busy or not, if don't busy then user can be a courier
+    """
     class Meta:
         model = Profile
         fields = [
@@ -181,6 +195,15 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer fields:
+    is_superuser: admin or not,
+    is_staff: staff or not, if user is staff then user can be courier or working in a shop,
+    username,
+    first_name: name,
+    last_name: surname,
+    is_active: online or not
+    """
     class Meta:
         model = User
         fields = [
@@ -194,6 +217,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class LocationSerializer(serializers.ModelSerializer):
+    """
+    Serializer fields:
+    latitude and longitude it is geographic coordinates
+    """
+
     latitude = serializers.FloatField()
     longitude = serializers.FloatField()
 
@@ -208,20 +236,28 @@ class LocationSerializer(serializers.ModelSerializer):
 
 
 class CartSerializer(serializers.ModelSerializer):
-    owner = ProfileSerializer()
+    """
+    Serializer fields: product_name, 
+        count product in cart,
+        product_total - total price for one product in cart
+    """
+    products = CartItemSerializer(many=True)
 
     class Meta:
         model = Cart
         fields = [
-            'owner',
+            'id',
             'products',
             'cart_total',
-
         ]
-        depth = 2
 
 
 class OrderRoomSerializer(serializers.ModelSerializer):
+    """
+    Room with participants and locations, for any options 
+    if participants == shop, then participant is equal user which working in a shop
+    and location is equal location for shop
+    """
     participants = ProfileSerializer(many=True)
     locations = LocationSerializer(many=True)
 
@@ -235,6 +271,11 @@ class OrderRoomSerializer(serializers.ModelSerializer):
 
 
 class ShopSerializer(serializers.ModelSerializer):
+    """
+    Information about shop: name shop, position shop(latitude, longitude),
+    start working shop (by default: 9:00),
+    finish working shop (by default: 22:00)
+    """
     class Meta:
         model = Shop
         fields = [
@@ -247,6 +288,16 @@ class ShopSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
+    """
+    Serializer for checkout order contains the next fields:
+    user: username,
+    date: day of ordering(today),
+    phone: phone number is valid only for Belarus format phone number 
+    first_name: name
+    last_name: surname
+    status: by default('Принят к обработке' in English 'Accepted for processing')
+    purchase_type: Options ('Доставка курьером', 'Самовывоз') in English ('Courier delivery','Pickup')
+    """
     user=serializers.CharField(source='user.user.username')
     date = serializers.SerializerMethodField('_date')
     phone = serializers.CharField(max_length=13)
@@ -278,14 +329,14 @@ class OrderSerializer(serializers.ModelSerializer):
         return result.group(0)
 
     def validate_first_name(self, first_name):
-        result = re.match(r'^[А-Яа-я]{2,30}$', first_name)
+        result = re.match(r'^[A-za-zА-Яа-я]{2,30}$', first_name)
         if result is None:
             raise serializers.ValidationError("Имя должно содержать только буквы, "
                                               "и его длина не должна быть меньше 2")
         return result.group(0)
 
     def validate_last_name(self, last_name):
-        result = re.match(r'^[А-Яа-я]{3,30}$', last_name)
+        result = re.match(r'^[A-za-zА-Яа-я]{3,30}$', last_name)
         if result is None:
             raise serializers.ValidationError("Фамилия должна содержать только буквы, "
                                               "и ее длина не должна быть меньше 3")

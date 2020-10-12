@@ -44,17 +44,11 @@ class Product(models.Model):
     @property
     def get_count(self):
         return self.count
-    
-    # Change instance count , need change on class level
+
     @get_count.setter
     def get_count(self, new_count):
         self.count = new_count
-        self.save()
 
-    @classmethod
-    def change_count(cls, new_count):
-        cls.count = new_count
-        return cls.count
 
 
 class Profile(models.Model):

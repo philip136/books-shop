@@ -74,7 +74,7 @@ class UserCreateApi(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class TypeProductsApi(RetrieveAPIView):
+class TypeProductsApi(ListAPIView):
     """
     Api for any type products
     """
@@ -82,13 +82,10 @@ class TypeProductsApi(RetrieveAPIView):
     serializer_class = TypeProductSerializer
     permission_classes = (AllowAny,)
 
-    def get(self, request: HttpRequest, *args, **kwargs) -> Response:
-        products: list = [product for product in self.get_queryset().iterator()]
-        return Response(self.serializer_class(products, many=True).data)
-
-    def get_queryset(self):
+    def get_queryset(self) -> list:
         type_name: str = self.kwargs.get('type')
         products: list = Product.objects.filter(type__type__icontains=type_name)
+        logger.info(f"Products by type={products}")
         return products
 
 
@@ -126,7 +123,9 @@ class CartApi(RetrieveAPIView):
     def get_queryset(self):
         user: User = self.request.user
         profile: Profile = Profile.objects.get(user=user)
+        logger.info(profile)
         cart: Union[Cart, None] = Cart.objects.filter(owner=profile).first()
+        logger.info(cart)
         if cart is None:
             cart: Cart = Cart.objects.create(owner=profile)
             cart.save()
@@ -134,6 +133,7 @@ class CartApi(RetrieveAPIView):
 
     def get(self, request, *args, **kwargs):
         serializer = self.serializer_class(self.get_queryset())
+        logger.info(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
