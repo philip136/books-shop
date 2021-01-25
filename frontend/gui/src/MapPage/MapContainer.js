@@ -3,9 +3,10 @@ import {Map as LeafletMap, TileLayer, Marker, Popup} from 'react-leaflet';
 import { iconPerson } from "../_components/CustomMarker";
 import WebSocketInstance from "../websocket";
 import {connect} from 'react-redux';
-import {Button} from "bootstrap-4-react/lib/components";
+import { Modal, ModalBody, ModalHeader, ModalFooter, Button } from 'reactstrap';
 import Control from 'react-leaflet-control';
 import {Link, Redirect} from 'react-router-dom';
+import * as actions from '../_store/actions/orderRoom/orderRoom';
 
 
 
@@ -14,7 +15,7 @@ class MapContainer extends React.Component {
        location: {lat: 53.893009, lng: 27.567444}
     };
 
-    initialiseRoom() {
+    initializeRoom() {
         this.waitForSocketConnection(() => {
             WebSocketInstance.fetchLocations(
                 this.props.username,
@@ -26,7 +27,9 @@ class MapContainer extends React.Component {
 
     constructor(props) {
         super(props);
-        this.initialiseRoom();
+        this.initializeRoom();
+        this.closeOrder = this.closeOrder.bind(this);
+        this.onGotoMainPageClick = this.onGotoMainPageClick.bind(this);
     }
 
     waitForSocketConnection(callback) {
@@ -81,8 +84,22 @@ class MapContainer extends React.Component {
         ));
     };
 
+    getIsStuff() { 
+        return localStorage.getItem('is_staff') === 'true';
+    } 
+
+    closeOrder() {
+        const roomId = this.props.match.params.roomID;
+        this.props.closeOrder(roomId);
+    }
+
+    onGotoMainPageClick() {
+        this.props.history.push('/');
+    }
+
     render(){
         return (
+            <>
                 <LeafletMap
                     center={this.state.location}
                     zoom={11}
@@ -96,16 +113,29 @@ class MapContainer extends React.Component {
                 {this.props.locations && this.renderLocation(this.props.locations) }
 
                 <Control position='topleft'>
-                    <Button className='map-button' onClick={ () => this.sendLocation()}>
+                    <Button outline className='map-button' onClick={ () => this.sendLocation()}>
                         Обновить
-                    </ Button>
-                </ Control>
+                    </Button>
+                </Control>
                 <Control position='topleft'>
-                <Button className='map-button'>
-                    <Link to="/">Вернуться</Link>
-                </Button>
-                 </Control>
-            </ LeafletMap>
+                    <Button outline color='primary' className='map-button'>
+                        <Link to="/">Вернуться</Link>
+                    </Button>
+                </Control>
+                {this.getIsStuff() && (
+                    <Control position='topleft'>
+                        <Button outline className='map-button' onClick={this.closeOrder} disabled={this.props.isClosed}>{this.props.isClosed? 'Закрыто' : 'Закрыть заказ'}</Button>
+                    </Control>
+                )}
+            </LeafletMap>
+            {!this.getIsStuff() && (
+                <Modal isOpen={this.props.isClosed}>
+                    <ModalHeader>Статус заказа</ModalHeader>
+                    <ModalBody>Ваш заказ был выполнен и закрыт!</ModalBody>
+                    <ModalFooter><Button color='primary' onClick={this.onGotoMainPageClick}>Вернуться на главную</Button></ModalFooter>
+                </Modal>
+            )}
+            </>
         );
     }
 }
@@ -114,8 +144,15 @@ const mapStateToProps = (state) => {
     return {
         username: state.auth.username,
         locations: state.location.locations,
-        token: state.auth.token
+        token: state.auth.token,
+        isClosed: state.location.isClosed
     };
 };
 
-export default connect(mapStateToProps)(MapContainer);
+const mapDispatchToProps = dispatch => {
+    return {
+        closeOrder: id => dispatch(actions.closeOrder(id))
+    };
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(MapContainer);

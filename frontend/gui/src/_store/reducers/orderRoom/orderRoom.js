@@ -5,7 +5,8 @@ const initialState = {
     orderSuccess: false,
     error: null,
     locations: [],
-    room: []
+    room: [],
+    isClosed: false
 };
 
 const addLocation = (state, action) => {
@@ -27,11 +28,18 @@ const setRoom = (state, action) => {
     });
 };
 
+const closeRoom = (state, action) => {
+    return updateObject(state, {
+        isClosed: true
+    });
+};
+
 const reducer = (state=initialState, action) => {
     switch (action.type) {
         case actionTypes.ADD_LOCATION: return addLocation(state, action);
         case actionTypes.SET_LOCATIONS: return setLocations(state, action);
         case actionTypes.GET_ROOM_SUCCESS: return setRoom(state, action);
+        case actionTypes.CLOSE_ORDER: return closeRoom(state, action);
         default:
             return state;
     }

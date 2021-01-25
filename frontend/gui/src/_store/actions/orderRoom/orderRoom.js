@@ -1,7 +1,7 @@
 import * as actionTypes from '../actionTypes';
 import {authAxios} from "../../../utils";
-import {orderRoomUrl} from "../../../constants";
-
+import {closeOrderUrl, orderRoomUrl} from "../../../constants";
+import WebSocketInstance from "../../../websocket";
 
 export const addLocation = location => {
     return {
@@ -24,6 +24,13 @@ export const getUserRoomSuccess = room => {
     };
 };
 
+export const closeOrderSuccess = roomId => {
+    return { 
+        type: actionTypes.CLOSE_ORDER,
+        roomId: roomId
+     };
+}
+
 export const getUserRoom = (id) => {
     return dispatch => {
         authAxios()
@@ -37,3 +44,12 @@ export const getUserRoom = (id) => {
     };
 };
 
+export const closeOrder = (id) => {
+    return dispatch => {
+        authAxios().delete(closeOrderUrl(id))
+        .then(() => {
+            WebSocketInstance.closeOrder(id);
+            dispatch(closeOrderSuccess(id));
+        });
+    };
+};

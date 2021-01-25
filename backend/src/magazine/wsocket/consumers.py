@@ -9,6 +9,10 @@ from asgiref.sync import async_to_sync
 from django.shortcuts import get_object_or_404
 from django.contrib.gis.geos import fromstr
 import json
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def get_current_locations(roomId):
@@ -32,6 +36,18 @@ def get_current_order_room(roomId):
 
 
 class GeoConsumer(WebsocketConsumer):
+    def close_order(self, data):
+        """ Close order """
+        roomId = data['roomId']
+        
+        async_to_sync(self.channel_layer.group_send)(
+            self.room_group_name,
+            {
+                'type': 'close_order_handler',
+                'roomId': roomId
+            }
+        )
+
     def fetch_locations(self, data):
         """ Get locations data from order room """
         locations = get_current_locations(data['roomID'])
@@ -58,7 +74,8 @@ class GeoConsumer(WebsocketConsumer):
 
     commands = {
         'fetch_locations': fetch_locations,
-        'new_location': new_location
+        'new_location': new_location,
+        'close_order': close_order
     }
 
     def connect(self):
@@ -77,6 +94,7 @@ class GeoConsumer(WebsocketConsumer):
         )
 
     def receive(self, text_data=None, bytes_data=None):
+        logger.info(text_data)
         data = json.loads(text_data)
         self.commands[data['command']](self, data)
 
@@ -110,6 +128,14 @@ class GeoConsumer(WebsocketConsumer):
     def room_location(self, event):
         location = event['location']
         self.send(text_data=json.dumps(location))
+
+    def close_order_handler(self, event):
+        roomId = event['roomId']
+        content = { 
+            'command': 'close_order', 
+            'roomId': roomId 
+        }
+        self.send(text_data=json.dumps(content))
 
 
 

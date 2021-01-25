@@ -249,11 +249,10 @@ class OrderRoomApi(RetrieveAPIView, DestroyAPIView):
         pk = kwargs['pk']
         room = RoomOrder.objects.get(pk=pk)
         client, personal = room.participants.first(), room.participants.last()
-        order = Order.objects.get(user__username=client.user.username)
+        order = Order.objects.filter(user=personal).first()
         order.check_status = "Оплачен"
         order.payment = True
         order.items.products.all().delete()
-        order.delete()
         room.delete()
         return Response({'message': 'Клиент оплатил товар'},
                         status=status.HTTP_204_NO_CONTENT)

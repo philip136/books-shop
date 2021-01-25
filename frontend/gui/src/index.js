@@ -10,6 +10,7 @@ import thunkMiddleware from 'redux-thunk';
 import { Provider } from 'react-redux';
 import 'leaflet/dist/leaflet.css';
 import {jwt} from './_store/middleware/jwt_middleware';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 
 const composeEnhances = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose;
