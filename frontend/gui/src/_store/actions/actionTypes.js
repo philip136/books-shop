@@ -15,6 +15,7 @@ export const FAILURE_CART = "FAILURE_CART";
 export const ADD_LOCATION = "ADD_LOCATION";
 export const SET_LOCATIONS = "SET_LOCATIONS";
 export const GET_ROOM_SUCCESS = "GET_ROOM_SUCCESS";
+export const CLOSE_ORDER = "CLOSE_ORDER";
 
 export const REQUEST_BUYING = "REQUEST_BUYING";
 export const SUCCESS_BUYING = "SUCCESS_BUYING";

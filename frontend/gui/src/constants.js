@@ -19,3 +19,4 @@ export const roomUrl = `${endpoint}get-room/`;
 export const registrationUrl = `${endpoint}create/user/`;
 export const loginUrl = `${endpoint}token/obtain/`;
 export const refreshTokenUrl = `${endpoint}token/refresh/`;
+export const closeOrderUrl = id => `${endpoint}order-room/${id}/`;

@@ -41,7 +41,7 @@ class WebsocketService {
 
     socketNewLocation(data) {
         const parsedData = JSON.parse(data);
-        console.log(parsedData)
+        console.log(parsedData);
         const command = parsedData.command;
         if (Object.keys(this.callbacks).length === 0) {
             return;
@@ -51,6 +51,9 @@ class WebsocketService {
         }
         if (command === 'new_location') {
             this.callbacks[command](parsedData.location);
+        }
+        if (command === 'close_order') {
+            this.callbacks[command](parsedData.roomId);        
         }
     }
 
@@ -72,9 +75,10 @@ class WebsocketService {
         })
     }
 
-    addCallbacks(locationsCallback, newLocationCallback) {
+    addCallbacks(locationsCallback, newLocationCallback, closeOrderCallback) {
         this.callbacks['locations'] = locationsCallback;
         this.callbacks['new_location'] = newLocationCallback;
+        this.callbacks['close_order'] = closeOrderCallback;
     }
 
     sendLocation(data) {
@@ -83,6 +87,10 @@ class WebsocketService {
         } catch (error) {
             console.log(error.message);
         }
+    }
+
+    closeOrder(id) {
+        this.sendLocation({ command: 'close_order', roomId: id });
     }
 
     state() {
