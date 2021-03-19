@@ -22,7 +22,7 @@ django-debug-toolbar==2.2
 django-google-maps==0.12.1
 django-phonenumbers==1.0.1
 django-rest-auth==0.9.5
-djangorestframework==3.11.0
+djangorestframework==3.11.2
 djangorestframework-simplejwt==4.4.0
 hiredis==1.0.1
 hyperlink==19.0.0
